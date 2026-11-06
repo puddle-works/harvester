@@ -67,7 +67,5 @@ It holds one puddle: one extension with one bounded purpose.
   push with `--yes`; `VISIBILITY` must equal `visibility:` in `manifest.yaml`.
 - Review reports live in `swamp-extension-review/` and are committed with the
   version they review.
-- `example.ts`, its test and `workflows/workflow-example.yaml` are
-  placeholders. Replace them; do not extend them.
 
 [adr]: https://github.com/puddle-works/puddleworks-apps/blob/main/docs/adr/ADR-004-one-repo-per-puddle.md
