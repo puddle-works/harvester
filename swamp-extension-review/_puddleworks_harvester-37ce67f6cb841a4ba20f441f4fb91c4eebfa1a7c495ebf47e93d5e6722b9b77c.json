@@ -1,7 +1,7 @@
 {
   "extension": "@puddleworks/harvester",
-  "version": "2026.11.06.3",
-  "reviewedAt": "2026-11-06T16:14:02Z",
+  "version": "2026.11.06.4",
+  "reviewedAt": "2026-11-06T16:44:02Z",
   "dimensions": [
     {
       "id": "credentials-secrets",
@@ -41,7 +41,7 @@
     {
       "id": "published-surface-hygiene",
       "verdict": "pass",
-      "note": "Re-read for public release: tracked files hold no secrets, emails or real names. The _registry test hook is visible in the published track and refresh arguments. By reading the code, it needs an object with functions, which a CLI input cannot supply, so it cannot bypass the own-collective check; a wrong value only makes the method fail. Subprocess use is now documented in the README."
+      "note": "Re-read for public release: tracked files hold no secrets, emails or real names. The _registry test hook is visible in the published track and refresh arguments. By reading the code, it needs an object with functions, which a CLI input cannot supply, so it cannot bypass the own-collective check; a wrong value only makes the method fail. Subprocess use is now documented in the README. The README now pulls the extension first: a fresh-install test of 2026.11.06.3 showed model create fails with collective_not_trusted without it. A test covers the order."
     },
     {
       "id": "schema-strictness",
@@ -76,7 +76,7 @@
     {
       "id": "version-upgrades",
       "verdict": "pass",
-      "note": "2026.11.06.2 is published. globalArguments is an empty object and did not change, so 2026.11.06.3 carries a no-op upgrade, covered by a test."
+      "note": "2026.11.06.3 is published. globalArguments is an empty object and did not change, so 2026.11.06.4 carries a no-op upgrade, covered by a test."
     }
   ]
 }
