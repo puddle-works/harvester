@@ -1,0 +1,82 @@
+{
+  "extension": "@puddleworks/harvester",
+  "version": "2026.11.06.1",
+  "reviewedAt": "2026-11-06T13:58:49Z",
+  "dimensions": [
+    {
+      "id": "credentials-secrets",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "logging-quality",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "error-handling",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "testing-completeness",
+      "verdict": "pass",
+      "note": "Domain rules, report and every method are unit tested with a stub registry. The real swampRegistry (Deno.Command) is not unit tested."
+    },
+    {
+      "id": "idempotency-resilience",
+      "verdict": "issue",
+      "note": "refresh appends a reading each run, so running it twice in a week adds two readings."
+    },
+    {
+      "id": "api-contracts",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "resource-management",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "published-surface-hygiene",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "schema-strictness",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "lifetime-gc",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "crud-completeness",
+      "verdict": "issue",
+      "note": "There is no untrack method; tracking is recorded and removal is left out by design for now."
+    },
+    {
+      "id": "preflight-checks",
+      "verdict": "na",
+      "note": "No preflight needed."
+    },
+    {
+      "id": "instance-names",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "data-access",
+      "verdict": "pass",
+      "note": ""
+    },
+    {
+      "id": "version-upgrades",
+      "verdict": "na",
+      "note": "First version."
+    }
+  ]
+}
