@@ -33,6 +33,11 @@ Only extensions in your own collectives can be tracked (checked against
 `swamp auth whoami`). Only the username and collectives are read from your
 account; no email or name is stored.
 
+Harvester reads the registry by running `swamp auth whoami` and
+`swamp extension info` as subprocesses, so `swamp` must be on your `PATH`. Those
+are the only commands it runs, and extension names must match `@collective/name`
+before they are passed to one.
+
 ```
 swamp model create @puddleworks/harvester harvester
 swamp model method run harvester track --input extension=@acme/tool

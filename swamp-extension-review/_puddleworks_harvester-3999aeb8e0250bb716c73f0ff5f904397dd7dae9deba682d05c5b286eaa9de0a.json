@@ -1,12 +1,12 @@
 {
   "extension": "@puddleworks/harvester",
   "version": "2026.11.06.2",
-  "reviewedAt": "2026-11-06T15:07:57Z",
+  "reviewedAt": "2026-11-06T16:03:19Z",
   "dimensions": [
     {
       "id": "credentials-secrets",
       "verdict": "pass",
-      "note": ""
+      "note": "Re-read for public release. No secrets are read or stored. parseWhoami keeps only username and collectives; parseInfo drops author fields."
     },
     {
       "id": "logging-quality",
@@ -41,12 +41,12 @@
     {
       "id": "published-surface-hygiene",
       "verdict": "pass",
-      "note": ""
+      "note": "Re-read for public release: tracked files hold no secrets, emails or real names. The _registry test hook is visible in the published track and refresh arguments. By reading the code, it needs an object with functions, which a CLI input cannot supply, so it cannot bypass the own-collective check; a wrong value only makes the method fail. Subprocess use is now documented in the README."
     },
     {
       "id": "schema-strictness",
       "verdict": "pass",
-      "note": ""
+      "note": "Inputs are typed. _registry is z.any by design (test hook). record, advance and untrack do not regex-check extension, but must find it in the store; by reading the code, a prototype key such as __proto__ gets past that lookup and has no effect on stored data, because it does not survive serialisation. Not covered by a test."
     },
     {
       "id": "lifetime-gc",

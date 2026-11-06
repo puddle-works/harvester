@@ -63,7 +63,7 @@ It holds one puddle: one extension with one bounded purpose.
   puddle-tooling. Every workflow in `workflows/` needs `maxReruns` and
   `maxWallClock` tags, and a workflow that reads another model's data with
   `data.latest` needs an entry in `contracts.ts`.
-- `make publish VISIBILITY=private DRY_RUN=1` runs the publish dry run. Never
+- `make publish VISIBILITY=public DRY_RUN=1` runs the publish dry run. Never
   push with `--yes`; `VISIBILITY` must equal `visibility:` in `manifest.yaml`.
 - Review reports live in `swamp-extension-review/` and are committed with the
   version they review.
