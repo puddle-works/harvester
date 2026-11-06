@@ -18,12 +18,10 @@ jobs:
     uses: puddle-works/puddle-tooling/.github/workflows/contracts-check.yml@v0.2.2
     with:
       tooling-ref: v0.2.2
-      accepted-warnings: deno-command
   guardrails:
     uses: puddle-works/puddle-tooling/.github/workflows/guardrails-check.yml@v0.2.2
     with:
       tooling-ref: v0.2.2
-      accepted-warnings: deno-command
   publish:
     uses: puddle-works/puddle-tooling/.github/workflows/publish.yml@v0.2.2
     with:
