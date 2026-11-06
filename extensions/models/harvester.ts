@@ -20,6 +20,7 @@ import {
   newCandidate,
   parseInfo,
   parseWhoami,
+  readToday,
   record,
   type RegistryFacts,
   type Stage,
@@ -140,7 +141,7 @@ const Registry = z.any().optional().describe("Test hook: a registry stub.");
 /** The model type. */
 export const model = {
   type: "@puddleworks/harvester",
-  version: "2026.11.06.1",
+  version: "2026.11.06.2",
   globalArguments: GlobalArgsSchema,
   resources: {
     candidates: {
@@ -209,6 +210,18 @@ export const model = {
         return save(context, store);
       },
     },
+    untrack: {
+      description:
+        "Stop tracking an extension. Older stored versions keep its history.",
+      arguments: z.object({ extension: z.string() }),
+      execute: async (args: { extension: string }, context: Ctx) => {
+        const store = await load(context);
+        tracked(store, args.extension);
+        delete store[args.extension];
+        context.logger.info("Untracked {e}", { e: args.extension });
+        return save(context, store);
+      },
+    },
     refresh: {
       description:
         "Take a pull-count reading of every tracked extension (run weekly).",
@@ -219,7 +232,10 @@ export const model = {
       ) => {
         const reg = args._registry ?? swampRegistry;
         const store = await load(context);
+        const now = new Date().toISOString();
         for (const name of Object.keys(store)) {
+          // A rerun on the same day must not add a second reading.
+          if (readToday(store[name], now)) continue;
           try {
             store[name] = addReading(store[name], await reg.info(name));
           } catch (error) {

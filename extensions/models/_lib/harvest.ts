@@ -168,6 +168,12 @@ export function addReading(
   };
 }
 
+/** Whether a reading was already taken on the UTC day of `now`. */
+export function readToday(candidate: Candidate, now: string): boolean {
+  const day = now.slice(0, 10);
+  return candidate.readings.some((r) => r.at.slice(0, 10) === day);
+}
+
 const TEXT_FIELDS = [
   "requestRef",
   "steward",
