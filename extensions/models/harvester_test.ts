@@ -214,3 +214,12 @@ Deno.test("the current version has an upgrade that keeps the arguments", () => {
   const args = { kept: "value" };
   assertEquals(entry.upgradeAttributes(args), args);
 });
+
+Deno.test("the README pulls the extension before creating the model", async () => {
+  const readme = await Deno.readTextFile(
+    new URL("../../README.md", import.meta.url),
+  );
+  const pull = readme.indexOf("swamp extension pull @puddleworks/harvester");
+  assert(pull !== -1, "README never pulls the extension");
+  assert(pull < readme.indexOf("swamp model create"));
+});
