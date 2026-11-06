@@ -207,3 +207,10 @@ Deno.test("report writes a markdown file", async () => {
   assertEquals(f.specName, "report");
   assert(f.text?.includes("@acme/tool"));
 });
+
+Deno.test("the current version has an upgrade that keeps the arguments", () => {
+  const entry = model.upgrades.find((u) => u.toVersion === model.version);
+  assert(entry, `no upgrade entry for ${model.version}`);
+  const args = { kept: "value" };
+  assertEquals(entry.upgradeAttributes(args), args);
+});

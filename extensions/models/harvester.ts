@@ -141,8 +141,15 @@ const Registry = z.any().optional().describe("Test hook: a registry stub.");
 /** The model type. */
 export const model = {
   type: "@puddleworks/harvester",
-  version: "2026.11.06.2",
+  version: "2026.11.06.3",
   globalArguments: GlobalArgsSchema,
+  upgrades: [
+    {
+      toVersion: "2026.11.06.3",
+      description: "Links the repository; no schema changes.",
+      upgradeAttributes: (old: Record<string, unknown>) => old,
+    },
+  ],
   resources: {
     candidates: {
       description: "Every tracked extension, its stage, evidence and readings.",

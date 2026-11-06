@@ -1,7 +1,7 @@
 {
   "extension": "@puddleworks/harvester",
-  "version": "2026.11.06.2",
-  "reviewedAt": "2026-11-06T16:03:19Z",
+  "version": "2026.11.06.3",
+  "reviewedAt": "2026-11-06T16:14:02Z",
   "dimensions": [
     {
       "id": "credentials-secrets",
@@ -75,8 +75,8 @@
     },
     {
       "id": "version-upgrades",
-      "verdict": "na",
-      "note": "No earlier version has been published."
+      "verdict": "pass",
+      "note": "2026.11.06.2 is published. globalArguments is an empty object and did not change, so 2026.11.06.3 carries a no-op upgrade, covered by a test."
     }
   ]
 }
