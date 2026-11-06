@@ -1,0 +1,30 @@
+id: 48a898d9-b1ff-4fb6-899a-60e34bed0451
+name: "@puddleworks/harvester-weekly"
+description: Take this week's pull readings of every tracked extension, then write the stage report.
+version: 1
+tags:
+  maxReruns: "5"
+  maxWallClock: "10m"
+inputs:
+  type: object
+  properties: {}
+  required: []
+jobs:
+  - name: weekly
+    steps:
+      - name: refresh
+        task:
+          type: model_method
+          modelIdOrName: harvester
+          methodName: refresh
+          inputs: {}
+      - name: report
+        dependsOn:
+          - step: refresh
+            condition:
+              type: succeeded
+        task:
+          type: model_method
+          modelIdOrName: harvester
+          methodName: report
+          inputs: {}
