@@ -16,6 +16,7 @@ import {
   newCandidate,
   parseInfo,
   parseWhoami,
+  readToday,
   record,
   type RegistryFacts,
   type Stage,
@@ -267,4 +268,11 @@ Deno.test("only extensions in the runner's own collectives may be tracked", () =
     Error,
     "@other",
   );
+});
+
+Deno.test("readToday is true only when a reading was taken on that UTC day", () => {
+  const c = addReading(newCandidate("@a/b", 1, T0), good, T0);
+  assertEquals(readToday(c, "2026-11-06T23:59:00.000Z"), true);
+  assertEquals(readToday(c, T1), false);
+  assertEquals(readToday(newCandidate("@a/b", 1, T0), T0), false);
 });

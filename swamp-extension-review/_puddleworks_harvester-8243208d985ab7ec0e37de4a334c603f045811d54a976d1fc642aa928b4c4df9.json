@@ -1,7 +1,7 @@
 {
   "extension": "@puddleworks/harvester",
-  "version": "2026.11.06.1",
-  "reviewedAt": "2026-11-06T13:58:49Z",
+  "version": "2026.11.06.2",
+  "reviewedAt": "2026-11-06T15:07:57Z",
   "dimensions": [
     {
       "id": "credentials-secrets",
@@ -21,12 +21,12 @@
     {
       "id": "testing-completeness",
       "verdict": "pass",
-      "note": "Domain rules, report and every method are unit tested with a stub registry. The real swampRegistry (Deno.Command) is not unit tested."
+      "note": "Domain rules, report and every method are unit tested with a stub registry. The real swampRegistry (Deno.Command) is not unit tested; a live smoke test covered it."
     },
     {
       "id": "idempotency-resilience",
-      "verdict": "issue",
-      "note": "refresh appends a reading each run, so running it twice in a week adds two readings."
+      "verdict": "pass",
+      "note": "refresh skips an extension that already has a reading on the same UTC day (tested), so a rerun is safe."
     },
     {
       "id": "api-contracts",
@@ -55,8 +55,8 @@
     },
     {
       "id": "crud-completeness",
-      "verdict": "issue",
-      "note": "There is no untrack method; tracking is recorded and removal is left out by design for now."
+      "verdict": "pass",
+      "note": "track, record, refresh, advance, untrack and report are present and tested. untrack removes from the latest document; older stored versions keep history."
     },
     {
       "id": "preflight-checks",
@@ -76,7 +76,7 @@
     {
       "id": "version-upgrades",
       "verdict": "na",
-      "note": "First version."
+      "note": "No earlier version has been published."
     }
   ]
 }

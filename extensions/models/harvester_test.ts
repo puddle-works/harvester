@@ -6,7 +6,11 @@
 import { assert, assertEquals, assertRejects } from "jsr:@std/assert@1";
 import { createModelTestContext } from "jsr:@swamp-club/swamp-testing@0.20261030.68";
 import { model, type RegistryPort } from "./harvester.ts";
-import { newCandidate, type RegistryFacts } from "./_lib/harvest.ts";
+import {
+  addReading,
+  newCandidate,
+  type RegistryFacts,
+} from "./_lib/harvest.ts";
 
 const facts: RegistryFacts = {
   latestVersion: "1.0.0",
@@ -106,6 +110,44 @@ Deno.test("refresh keeps going when one extension cannot be read", async () => {
   };
   assertEquals(w.data.candidates["@acme/bad"].readings.length, 0);
   assertEquals(w.data.candidates["@acme/good"].readings.length, 1);
+});
+
+Deno.test("refresh does not add a second reading on the same day", async () => {
+  const today = new Date().toISOString();
+  const taken = addReading(newCandidate("@acme/tool"), facts, today);
+  const { context, getWrittenResources } = createModelTestContext({
+    storedResources: { candidates: { candidates: { "@acme/tool": taken } } },
+  });
+  await model.methods.refresh.execute({ _registry: registry(99) }, context);
+  const w = getWrittenResources()[0] as unknown as {
+    data: { candidates: Record<string, { readings: unknown[] }> };
+  };
+  assertEquals(w.data.candidates["@acme/tool"].readings.length, 1);
+});
+
+Deno.test("untrack removes an extension and keeps the others", async () => {
+  const { context, getWrittenResources } = createModelTestContext({
+    storedResources: {
+      candidates: {
+        candidates: {
+          "@acme/a": newCandidate("@acme/a"),
+          "@acme/b": newCandidate("@acme/b"),
+        },
+      },
+    },
+  });
+  await model.methods.untrack.execute({ extension: "@acme/a" }, context);
+  const w = getWrittenResources()[0] as unknown as Written;
+  assertEquals(Object.keys(w.data.candidates), ["@acme/b"]);
+});
+
+Deno.test("untrack refuses an untracked extension", async () => {
+  const { context } = createModelTestContext();
+  await assertRejects(
+    () => model.methods.untrack.execute({ extension: "@acme/a" }, context),
+    Error,
+    "not tracked",
+  );
 });
 
 Deno.test("record stores evidence on a tracked extension", async () => {

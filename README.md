@@ -38,11 +38,14 @@ swamp model create @puddleworks/harvester harvester
 swamp model method run harvester track --input extension=@acme/tool
 swamp model method run harvester record --input extension=@acme/tool --input steward=platform-team
 swamp model method run harvester advance --input extension=@acme/tool --input to=2 --input note="why"
+swamp model method run harvester untrack --input extension=@acme/tool   # older stored versions keep its history
 swamp workflow run @puddleworks/harvester-weekly   # weekly: refresh, then report
 ```
 
 The steward is a named team or person with no default; it is required from
 stage 4.
+
+A second `refresh` on the same UTC day adds no reading, so a rerun is safe.
 
 ## Reaching an owner
 
