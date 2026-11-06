@@ -6,7 +6,8 @@ labels:
   - harvesting
   - stewardship
   - team-topologies
-visibility: private
+visibility: public
+license: MIT
 additionalFiles:
   - README.md
   - LICENSE
