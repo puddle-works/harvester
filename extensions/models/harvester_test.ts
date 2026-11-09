@@ -206,6 +206,9 @@ Deno.test("report writes a markdown file", async () => {
   const f = getWrittenFiles()[0];
   assertEquals(f.specName, "report");
   assert(f.text?.includes("@acme/tool"));
+  const h = getWrittenFiles()[1];
+  assertEquals(h.specName, "reportHtml");
+  assert(h.text?.includes("<!doctype html>") && h.text.includes("@acme/tool"));
 });
 
 Deno.test("the current version has an upgrade that keeps the arguments", () => {

@@ -51,6 +51,9 @@ swamp workflow run @puddleworks/harvester-weekly   # weekly: refresh, then repor
 The steward is a named team or person with no default; it is required from
 stage 4.
 
+`report` writes two files: a markdown report and an HTML page with a stage track
+per extension, in dark mode like Capture, teal where it can move on and grey where something blocks it.
+
 A second `refresh` on the same UTC day adds no reading, so a rerun is safe.
 
 ## Reaching an owner
