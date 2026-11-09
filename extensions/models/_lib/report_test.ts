@@ -5,7 +5,7 @@
  */
 import { assert, assertEquals } from "jsr:@std/assert@1";
 import { addReading, newCandidate, type RegistryFacts } from "./harvest.ts";
-import { renderReport } from "./report.ts";
+import { renderReport, renderReportHtml } from "./report.ts";
 
 const facts: RegistryFacts = {
   latestVersion: "1.0.0",
@@ -46,4 +46,21 @@ Deno.test("no reading shows a dash, not a number", () => {
 Deno.test("the report keeps no personal data", () => {
   const md = renderReport([newCandidate("@a/b", 1, T0)], T0);
   assertEquals(md.includes("@") && md.includes("mailto"), false);
+});
+
+Deno.test("the HTML report shows blockers, escapes names and counts who can move", () => {
+  const stuck = newCandidate("@a/<b>", 1, T0);
+  let ready = newCandidate("@a/ok", 1, T0);
+  ready = addReading(ready, facts, T0);
+  ready = addReading(ready, { ...facts, pullCount: 55 }, T1);
+  const html = renderReportHtml([stuck, ready], T1);
+  assert(html.includes("1 of 2 extensions can move on now; 1 waits"));
+  assert(html.includes("Take at least two readings"));
+  assert(html.includes("@a/&lt;b&gt;") && !html.includes("@a/<b>"));
+  assert(html.includes('<i class="now ready"></i>'));
+  assert(html.includes("Ready to move to stage 2."));
+});
+
+Deno.test("the HTML report for no extensions says so", () => {
+  assert(renderReportHtml([], T0).includes("No extensions are tracked"));
 });

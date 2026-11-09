@@ -6,8 +6,8 @@
  * contacts anyone. Only extensions in the runner's own collectives can be
  * tracked, and only `username` and `collectives` are read from the account.
  *
- * Output: a `candidates` resource holding every tracked extension, and a
- * `report` markdown file.
+ * Output: a `candidates` resource holding every tracked extension, and the
+ * weekly `report` as a markdown file and as an HTML page.
  *
  * @module
  */
@@ -25,7 +25,7 @@ import {
   type RegistryFacts,
   type Stage,
 } from "./_lib/harvest.ts";
-import { renderReport } from "./_lib/report.ts";
+import { renderReport, renderReportHtml } from "./_lib/report.ts";
 
 /** The model takes no settings. */
 export const GlobalArgsSchema = z.object({});
@@ -141,7 +141,7 @@ const Registry = z.any().optional().describe("Test hook: a registry stub.");
 /** The model type. */
 export const model = {
   type: "@puddleworks/harvester",
-  version: "2026.11.06.4",
+  version: "2026.11.09.1",
   globalArguments: GlobalArgsSchema,
   upgrades: [
     {
@@ -152,6 +152,11 @@ export const model = {
     {
       toVersion: "2026.11.06.4",
       description: "Corrects the README; no schema changes.",
+      upgradeAttributes: (old: Record<string, unknown>) => old,
+    },
+    {
+      toVersion: "2026.11.09.1",
+      description: "Adds an HTML report file; no schema changes.",
       upgradeAttributes: (old: Record<string, unknown>) => old,
     },
   ],
@@ -168,6 +173,12 @@ export const model = {
     report: {
       description: "The weekly stage report.",
       contentType: "text/markdown",
+      lifetime: "infinite" as const,
+      garbageCollection: 52,
+    },
+    reportHtml: {
+      description: "The weekly stage report as a page with a stage track.",
+      contentType: "text/html",
       lifetime: "infinite" as const,
       garbageCollection: 52,
     },
@@ -283,17 +294,18 @@ export const model = {
       },
     },
     report: {
-      description: "Write the markdown report of every tracked extension.",
+      description:
+        "Write the markdown and HTML reports of every tracked extension.",
       arguments: z.object({}),
       execute: async (_args: Record<string, never>, context: Ctx) => {
         const store = await load(context);
-        const md = renderReport(
-          Object.values(store),
-          new Date().toISOString(),
-        );
-        const handle = await context.createFileWriter("report", "weekly")
-          .writeText(md);
-        return { dataHandles: [handle] };
+        const candidates = Object.values(store);
+        const now = new Date().toISOString();
+        const md = await context.createFileWriter("report", "weekly")
+          .writeText(renderReport(candidates, now));
+        const html = await context.createFileWriter("reportHtml", "weekly")
+          .writeText(renderReportHtml(candidates, now));
+        return { dataHandles: [md, html] };
       },
     },
   },
