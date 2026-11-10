@@ -131,7 +131,8 @@ async function save(context: Ctx, store: Store) {
 }
 
 function tracked(store: Store, extension: string): Candidate {
-  const c = store[extension];
+  // Own keys only: "constructor" or "toString" would match any object.
+  const c = Object.hasOwn(store, extension) ? store[extension] : undefined;
   if (!c) throw new Error(`${extension} is not tracked. Run 'track' first.`);
   return c;
 }

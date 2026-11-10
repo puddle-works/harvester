@@ -38,9 +38,16 @@ Harvester reads the registry by running `swamp auth whoami` and
 are the only commands it runs, and extension names must match `@collective/name`
 before they are passed to one.
 
-```
+Pull the extension and create its model once:
+
+```sh
 swamp extension pull @puddleworks/harvester
 swamp model create @puddleworks/harvester harvester
+```
+
+Then track extensions, record evidence and move them on:
+
+```sh
 swamp model method run harvester track --input extension=@acme/tool
 swamp model method run harvester record --input extension=@acme/tool --input steward=platform-team
 swamp model method run harvester advance --input extension=@acme/tool --input to=2 --input note="why"

@@ -1,0 +1,82 @@
+{
+  "extension": "@puddleworks/harvester",
+  "version": "2026.11.09.1",
+  "reviewedAt": "2026-11-10T12:24:17Z",
+  "dimensions": [
+    {
+      "id": "credentials-secrets",
+      "verdict": "pass",
+      "note": "Reviewed at 79a08b2 plus the uncommitted tracked() fix, its test and the contracts.ts bump. No secrets are read, stored or logged. parseWhoami keeps only username and collectives from `swamp auth whoami --json`, which also returns email, name and id. The HTML page loads nothing from the network."
+    },
+    {
+      "id": "logging-quality",
+      "verdict": "pass",
+      "note": "track and untrack log at info with structured props. refresh warns per extension it cannot read, with the error message. With the fix, untrack no longer logs 'Untracked' for a name that was never tracked, such as hasOwnProperty."
+    },
+    {
+      "id": "error-handling",
+      "verdict": "pass",
+      "note": "A failed swamp subprocess throws with the command and its stderr. Untracked names (now including inherited keys), duplicates, outside collectives, empty evidence and blocked moves all throw messages saying what to do. refresh catches per-extension read failures so the other readings are kept (tested)."
+    },
+    {
+      "id": "testing-completeness",
+      "verdict": "pass",
+      "note": "`make test` passes: 49 tests, 0 failed. The new test, 'names every object inherits, such as constructor, are not tracked', checks that record with constructor and untrack with hasOwnProperty both reject and write nothing. Against the old tracked() in a scratch copy, that test fails and the other 15 model tests pass, so it guards the fix. It does not cover advance, but advance goes through the same tracked() call; a direct probe covered it. Still not unit tested: the real swampRegistry (Deno.Command), which was smoke tested earlier."
+    },
+    {
+      "id": "idempotency-resilience",
+      "verdict": "pass",
+      "note": "refresh skips an extension that already has a reading on the same UTC day (tested), so a workflow rerun (maxReruns 5) adds no readings. track refuses a duplicate. Rerunning record with a showcase adds another showcase entry, which is append-by-design."
+    },
+    {
+      "id": "api-contracts",
+      "verdict": "pass",
+      "note": "Checked against the live CLI earlier today: `swamp extension info --json` and `swamp auth whoami --json` have the field types parseInfo and parseWhoami expect. Neither parser changed. report returns two handles (report, reportHtml); the weekly workflow only calls methods."
+    },
+    {
+      "id": "resource-management",
+      "verdict": "pass",
+      "note": "Deno.Command(...).output() waits for the child and collects its pipes. One candidates resource (gc 200) and two report file specs (gc 52 each), all with infinite lifetime."
+    },
+    {
+      "id": "published-surface-hygiene",
+      "verdict": "pass",
+      "note": "Archive contents are unchanged in kind: harvester.ts and its _lib, workflow-weekly.yaml, README.md and LICENSE. contracts.ts is not published. Its move to puddle-tooling v0.2.3 type-checks (`deno check contracts.ts`), and `make contracts-check` and `make guardrails-check` pass at v0.2.3. `swamp extension fmt manifest.yaml --check` passes with the new code and test. The new comment in tracked() is accurate. The README split from the last review still holds, and subprocess use is documented."
+    },
+    {
+      "id": "schema-strictness",
+      "verdict": "pass",
+      "note": "Fixed since the c5e1681b review. tracked() now requires Object.hasOwn(store, extension). Re-ran the earlier repro on the current code with a store holding @acme/tool: record, advance and untrack with __proto__, constructor, toString, hasOwnProperty and valueOf all throw 'not tracked'. They make no writes, the store still parses against CandidatesSchema, and report runs. The other store lookups are safe: track's duplicate check runs after assertOwnCollective, whose @collective/name regex refuses inherited keys, and refresh iterates Object.keys. The extension argument is still a bare z.string(), but every method now either regex-checks it (track) or needs it to be an own key of the store. _registry stays z.any by design (test hook)."
+    },
+    {
+      "id": "lifetime-gc",
+      "verdict": "pass",
+      "note": "candidates: infinite, keeps 200 versions; history also lives inside the document. report and reportHtml: infinite, keep 52 versions (a year of weekly runs)."
+    },
+    {
+      "id": "crud-completeness",
+      "verdict": "pass",
+      "note": "track (create), record and advance (update), refresh (readings), untrack (delete from the latest document; older versions keep history) and report (read) are all present and tested."
+    },
+    {
+      "id": "preflight-checks",
+      "verdict": "pass",
+      "note": "track calls whoami and checks the collective before it writes anything. The other methods need the name to be an own key of the store before they change it. refresh has no sign-in preflight: if swamp is missing or signed out, each read only warns, which is not destructive."
+    },
+    {
+      "id": "instance-names",
+      "verdict": "pass",
+      "note": "Every method writes the one 'candidates' instance in the same CandidatesSchema shape. report writes the fixed 'weekly' instance of each file spec."
+    },
+    {
+      "id": "data-access",
+      "verdict": "pass",
+      "note": "Methods read their own state with readResource('candidates'). The workflow uses no data.latest reads. contracts.ts maps harvester to candidates and now imports from puddle-tooling v0.2.3, matching CI and puddle.mk; contracts-check reports '1 workflows OK'."
+    },
+    {
+      "id": "version-upgrades",
+      "verdict": "pass",
+      "note": "The manifest and model.version are both 2026.11.09.1, which is not yet published. The upgrades chain ends with a no-op entry for 2026.11.09.1, and the current-version upgrade test passes. The fix changes no schema or globalArguments."
+    }
+  ]
+}
