@@ -150,6 +150,26 @@ Deno.test("untrack refuses an untracked extension", async () => {
   );
 });
 
+Deno.test("names every object inherits, such as constructor, are not tracked", async () => {
+  const { context, getWrittenResources } = createModelTestContext();
+  await assertRejects(
+    () =>
+      model.methods.record.execute(
+        { extension: "constructor", steward: "x" },
+        context,
+      ),
+    Error,
+    "not tracked",
+  );
+  await assertRejects(
+    () =>
+      model.methods.untrack.execute({ extension: "hasOwnProperty" }, context),
+    Error,
+    "not tracked",
+  );
+  assertEquals(getWrittenResources(), []);
+});
+
 Deno.test("record stores evidence on a tracked extension", async () => {
   const { context, getWrittenResources } = createModelTestContext({
     storedResources: {
