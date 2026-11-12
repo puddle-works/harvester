@@ -1,11 +1,13 @@
 /**
- * The weekly report: the calls for capabilities and who answers them, then
- * one table row per tracked extension and what blocks each from moving on.
+ * The weekly report: the calls for capabilities, who answers them and which
+ * adopted capability each follows from, then one table row per tracked
+ * extension and what blocks each from moving on.
  * Pure, so it is tested without swamp.
  *
  * @module
  */
 import {
+  type Agreement,
   blockers,
   type Call,
   type Candidate,
@@ -27,6 +29,48 @@ function answering(call: Call, candidates: Candidate[]): string[] {
   );
 }
 
+/** The calls an adopted capability made possible: the 6→0 arrow. */
+function fertilised(c: Candidate, calls: Call[]): string[] {
+  return inOrder(calls).filter((call) => call.follows === c.extension).map(
+    (call) => `${call.id}${call.closedAt ? " (closed)" : ""}`,
+  );
+}
+
+/** Who has agreed to the recorded terms, or null when there are no terms. */
+function handshake(c: Candidate, to: Agreement): string | null {
+  const terms = to === "collaboration"
+    ? c.collaborationAgreement
+    : c.adoptionAgreement;
+  if (!terms) return null;
+  const side = (name: string, consent: { by: string } | null) =>
+    `${name}: ${consent ? `agreed (${consent.by})` : "not recorded"}`;
+  return `${to === "collaboration" ? "Trial" : "Adoption"} handshake – ${
+    side("platform", c.consents[to].platform)
+  }; ${side("original grouping", c.consents[to].source)}.`;
+}
+
+/** The facts under a candidate's status line, as plain text. */
+function details(c: Candidate, calls: Call[]): string[] {
+  const out: string[] = [];
+  if (c.inspection) {
+    out.push(
+      `Inspected ${c.inspection.at.slice(0, 10)}: ${c.inspection.notes}`,
+    );
+  }
+  for (const to of ["collaboration", "adoption"] as const) {
+    const line = handshake(c, to);
+    if (line) out.push(line);
+  }
+  if (c.credit) {
+    out.push(`Value attributed to the original grouping: ${c.credit}`);
+  }
+  if (c.decision) out.push(`Decision notes: ${c.decision}`);
+  if (c.reuseNotes) out.push(`Reuse review: ${c.reuseNotes}`);
+  const led = fertilised(c, calls);
+  if (led.length > 0) out.push(`Led to calls: ${led.join(", ")}.`);
+  return out;
+}
+
 /** Text for one markdown table cell. */
 function cell(text: string): string {
   return text.replace(/\s+/g, " ").replace(/\|/g, "\\|");
@@ -37,15 +81,15 @@ function callLines(calls: Call[], candidates: Candidate[]): string[] {
   const out = [
     "## Calls for capabilities",
     "",
-    "| Call | Platform | Need | Posted | Status | Answered by |",
-    "| --- | --- | --- | --- | --- | --- |",
+    "| Call | Platform | Need | Posted | Follows from | Status | Answered by |",
+    "| --- | --- | --- | --- | --- | --- | --- |",
   ];
   for (const call of inOrder(calls)) {
     const by = answering(call, candidates);
     out.push(
       `| ${call.id} | ${cell(call.platform)} | ${cell(call.need)} | ${
         call.ref ? cell(call.ref) : "–"
-      } | ${
+      } | ${call.follows ?? "–"} | ${
         call.closedAt ? `closed: ${cell(call.closeNote ?? "")}` : "open"
       } | ${
         by.length > 0
@@ -74,7 +118,16 @@ function progress(c: Candidate) {
       ready: false,
       label: "Adopted",
       message:
-        "Available for voluntary use. Record reuseNotes; start new discovery separately.",
+        "Available for voluntary use. Record reuseNotes; open a call with follows= for what it makes possible, and retire it with decide when the platform stops offering it.",
+      stops: [],
+    };
+  }
+  if (c.outcome === "retired") {
+    return {
+      ready: false,
+      label: "Retired",
+      message:
+        "No longer offered by the platform. The agreement, attribution and history are kept.",
       stops: [],
     };
   }
@@ -146,10 +199,10 @@ export function renderReport(
         c.steward ?? "none named"
       }.${c.callId ? ` Answers call: ${c.callId}.` : ""}`,
       ``,
-      state.message,
     );
-    if (c.decision) out.push(`Decision notes: ${c.decision}`);
-    if (c.reuseNotes) out.push(`Reuse review: ${c.reuseNotes}`);
+    // One paragraph each: markdown joins consecutive lines.
+    for (const line of details(c, calls)) out.push(line, ``);
+    out.push(state.message);
     for (const s of state.stops) out.push(`- ${s}`);
     for (const f of flags(c)) out.push(`- Flag: ${f}`);
     out.push("");
@@ -223,6 +276,8 @@ export function renderReportHtml(
         ? "No candidate answered."
         : "No candidate answers this call yet: look for one."
     }${call.ref ? ` Posted: ${escapeHtml(call.ref)}.` : ""}${
+      call.follows ? ` Follows from: ${escapeHtml(call.follows)}.` : ""
+    }${
       call.closedAt ? ` Closed: ${escapeHtml(call.closeNote ?? "")}` : ""
     }</div></div>`;
   }).join("");
@@ -232,7 +287,7 @@ export function renderReportHtml(
   const settled = candidates.length - ready - waiting;
   const title = candidates.length === 0
     ? "No extensions are tracked"
-    : `${ready} ready · ${waiting} waiting for evidence · ${settled} adopted, paused or under review`;
+    : `${ready} ready · ${waiting} waiting for evidence · ${settled} adopted, retired, paused or under review`;
   const rows = candidates.map((c, index) => {
     const state = states[index];
     const last = c.readings.at(-1);
@@ -259,13 +314,9 @@ export function renderReportHtml(
       }. Steward: ${escapeHtml(c.steward ?? "none named")}.${
         c.callId ? ` Answers call: ${escapeHtml(c.callId)}.` : ""
       }</div>${
-        c.decision
-          ? `<div class="state">Decision notes: ${escapeHtml(c.decision)}</div>`
-          : ""
-      }${
-        c.reuseNotes
-          ? `<div class="state">Reuse review: ${escapeHtml(c.reuseNotes)}</div>`
-          : ""
+        details(c, calls).map((line) =>
+          `<div class="state">${escapeHtml(line)}</div>`
+        ).join("")
       }${
         items.length === 0
           ? ""

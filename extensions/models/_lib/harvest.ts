@@ -8,7 +8,8 @@
  *
  * Node 6 has no legend in the diagram. Here it records an agreed adoption
  * and a usable shared offering. This is a local interpretation, not Skelton's
- * stage definition. New discovery does not reset an adopted capability.
+ * stage definition. The diagram's 6→0 arrow is a new call that follows from an
+ * adopted capability; the adopted capability keeps its own record.
  *
  * @module
  */
@@ -17,7 +18,48 @@
 export type Stage = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /** A harvesting decision, independent of the activity stage. */
-export type Outcome = "active" | "deferred" | "declined" | "adopted";
+export type Outcome =
+  | "active"
+  | "deferred"
+  | "declined"
+  | "adopted"
+  | "retired";
+
+/** Every outcome, for validation. */
+export const OUTCOMES: readonly Outcome[] = [
+  "active",
+  "deferred",
+  "declined",
+  "adopted",
+  "retired",
+];
+
+/** The two sides of the handshake: the platform and the original grouping. */
+export type Party = "platform" | "source";
+
+/** What a party agrees to: the trial, then the adoption. */
+export type Agreement = "collaboration" | "adoption";
+
+/** One party's agreement to the recorded terms. */
+export interface Consent {
+  /** The team or role that agreed. */
+  by: string;
+  at: string;
+}
+
+/** Each party's agreement, or null until it is recorded. */
+export type Handshake = Record<Party, Consent | null>;
+
+/** What the platform inspected and found before shaking hands. */
+export interface Inspection {
+  notes: string;
+  at: string;
+  /** The readiness concerns the registry showed when it was recorded. */
+  seen: ReadinessKey[];
+}
+
+/** A registry fact worth inspecting before a trial or an adoption. */
+export type ReadinessKey = "licence" | "repository" | "score";
 
 /** Optional registry classification; never evidence of an agreement. */
 export const CORE_LABEL = "harvest-core";
@@ -76,6 +118,8 @@ export interface Call {
   openedAt: string;
   closedAt: string | null;
   closeNote: string | null;
+  /** The adopted capability this call follows from: the 6→0 arrow. */
+  follows: string | null;
 }
 
 /** Everything tracked about one extension. */
@@ -100,12 +144,17 @@ export interface Candidate {
   showcases: { where: string; at: string }[];
   interest: string | null;
   negotiationNotes: string | null;
+  inspection: Inspection | null;
+  /** The terms of the trial; each party agrees to them in `consents`. */
   collaborationAgreement: string | null;
   collaborationNotes: string | null;
+  /** The terms of the adoption; each party agrees to them in `consents`. */
   adoptionAgreement: string | null;
+  consents: Record<Agreement, Handshake>;
   offeringRef: string | null;
   reuseNotes: string | null;
   decision: string | null;
+  /** The value recognised, attributed back to the original grouping. */
   credit: string | null;
   /** The pull count when stage 5 began, for the before/after comparison. */
   baselinePulls: number | null;
@@ -126,6 +175,8 @@ export type Evidence = Partial<
     valueStatement: string;
     interest: string;
     negotiationNotes: string;
+    /** What the platform inspected and found. Replaces the last inspection. */
+    inspectionNotes: string;
     collaborationAgreement: string;
     collaborationNotes: string;
     adoptionAgreement: string;
@@ -153,14 +204,25 @@ export function collectiveOf(extension: string): string {
 
 const CALL_ID = /^[a-z0-9][a-z0-9-]*$/;
 
-/** Open a call for a capability a platform needs. */
+/**
+ * Open a call for a capability a platform needs. `follows` is the adopted
+ * capability that made the call possible, if one did.
+ */
 export function newCall(
   id: string,
   need: string,
   platform: string,
   ref: string | null = null,
   now: string = new Date().toISOString(),
+  follows: Candidate | null = null,
 ): Call {
+  if (
+    follows && follows.outcome !== "adopted" && follows.outcome !== "retired"
+  ) {
+    throw new Error(
+      `A call follows an adopted capability: ${follows.extension} is at stage ${follows.stage} (${follows.outcome}).`,
+    );
+  }
   if (!CALL_ID.test(id)) {
     throw new Error(
       `'${id}' is not a call id: use lower-case letters, digits and hyphens.`,
@@ -178,6 +240,7 @@ export function newCall(
     openedAt: now,
     closedAt: null,
     closeNote: null,
+    follows: follows?.extension ?? null,
   };
 }
 
@@ -201,6 +264,14 @@ export function answerCall(candidate: Candidate, call: Call): Candidate {
     );
   }
   return { ...candidate, callId: call.id };
+}
+
+/** Nobody has agreed to anything yet. */
+export function noConsents(): Record<Agreement, Handshake> {
+  return {
+    collaboration: { platform: null, source: null },
+    adoption: { platform: null, source: null },
+  };
 }
 
 /** Start tracking an extension at stage 0 or 1. */
@@ -231,9 +302,11 @@ export function newCandidate(
     showcases: [],
     interest: null,
     negotiationNotes: null,
+    inspection: null,
     collaborationAgreement: null,
     collaborationNotes: null,
     adoptionAgreement: null,
+    consents: noConsents(),
     offeringRef: null,
     reuseNotes: null,
     decision: null,
@@ -286,53 +359,193 @@ const TEXT_FIELDS = [
   "credit",
 ] as const;
 
-/** Set the evidence a person supplies. Empty values are refused. */
+/** The terms each agreement's consents refer to. */
+const TERMS: Record<Agreement, "collaborationAgreement" | "adoptionAgreement"> =
+  {
+    collaboration: "collaborationAgreement",
+    adoption: "adoptionAgreement",
+  };
+
+/** What both parties shook hands on; fixed once the capability is adopted. */
+const AGREED = ["collaborationAgreement", "adoptionAgreement", "credit"];
+
+/**
+ * Set the evidence a person supplies. Empty values are refused. Changing an
+ * agreement's terms clears the consents given to the old terms.
+ */
 export function record(
   candidate: Candidate,
   evidence: Evidence,
   now: string = new Date().toISOString(),
 ): Candidate {
   const next = { ...candidate };
+  const settled = candidate.outcome === "adopted" ||
+    candidate.outcome === "retired";
   for (const [key, value] of Object.entries(evidence)) {
     if (value === undefined) continue;
-    const known = key === "showcase" ||
+    const known = key === "showcase" || key === "inspectionNotes" ||
       (TEXT_FIELDS as readonly string[]).includes(key);
     if (!known) throw new Error(`Unknown field '${key}'.`);
     if (typeof value !== "string" || value.trim() === "") {
       throw new Error(`'${key}' must not be empty.`);
     }
+    if (settled && AGREED.includes(key)) {
+      throw new Error(
+        `'${key}' is what both parties agreed when ${candidate.extension} was adopted; it is kept as agreed.`,
+      );
+    }
     if (key === "showcase") {
       next.showcases = [...next.showcases, { where: value.trim(), at: now }];
+    } else if (key === "inspectionNotes") {
+      next.inspection = {
+        notes: value.trim(),
+        at: now,
+        seen: readiness(candidate.facts).map((r) => r.key),
+      };
     } else {
+      for (const agreement of ["collaboration", "adoption"] as const) {
+        if (key === TERMS[agreement] && value.trim() !== candidate[key]) {
+          next.consents = {
+            ...next.consents,
+            [agreement]: { platform: null, source: null },
+          };
+        }
+      }
       (next as Record<string, unknown>)[key] = value.trim();
     }
   }
   return next;
 }
 
-function adoptionBlockers(c: Candidate): string[] {
+const PARTY_NAMES: Record<Party, string> = {
+  platform: "the platform",
+  source: "the original grouping",
+};
+
+/**
+ * Record one party's agreement to the terms already recorded. The handshake
+ * needs both parties, so one party cannot agree for the other.
+ */
+export function agree(
+  candidate: Candidate,
+  to: Agreement,
+  party: Party,
+  by: string,
+  now: string = new Date().toISOString(),
+): Candidate {
+  if (!Object.hasOwn(TERMS, to)) throw new Error("Unknown agreement.");
+  if (!Object.hasOwn(PARTY_NAMES, party)) throw new Error("Unknown party.");
+  if (!by.trim()) throw new Error("Say which team or role agreed (by).");
+  if (candidate.outcome !== "active") {
+    throw new Error(
+      `${candidate.extension} is ${candidate.outcome}; only an active candidate takes new agreements.`,
+    );
+  }
+  if (!candidate[TERMS[to]]) {
+    throw new Error(
+      `Record the terms first (${TERMS[to]}); a party agrees to terms.`,
+    );
+  }
+  if (to === "adoption" && candidate.stage < 5) {
+    throw new Error(
+      "Adoption is agreed after the period of collaboration (stage 5).",
+    );
+  }
+  return {
+    ...candidate,
+    consents: {
+      ...candidate.consents,
+      [to]: { ...candidate.consents[to], [party]: { by: by.trim(), at: now } },
+    },
+  };
+}
+
+/** The registry facts a platform should inspect, with the reason for each. */
+export function readiness(
+  facts: RegistryFacts | null,
+): { key: ReadinessKey; text: string }[] {
+  if (!facts) return [];
+  const out: { key: ReadinessKey; text: string }[] = [];
+  if (!facts.license) {
+    out.push({
+      key: "licence",
+      text: "review the missing licence before reuse.",
+    });
+  }
+  if (!facts.repositoryVerified) {
+    out.push({ key: "repository", text: "the repository is not verified." });
+  }
+  if ((facts.scorePercentage ?? 0) < MIN_SCORE) {
+    out.push({
+      key: "score",
+      text: `quality score is below the local guideline of ${MIN_SCORE}.`,
+    });
+  }
+  return out;
+}
+
+/** "The platform inspects it": before the handshake, and of what is known now. */
+function inspectionBlockers(c: Candidate): string[] {
+  if (!c.inspection) {
+    return ["Record what the platform inspected and found (inspectionNotes)."];
+  }
+  const unseen = readiness(c.facts).filter((r) =>
+    !c.inspection!.seen.includes(r.key)
+  );
+  if (unseen.length === 0) return [];
+  return [
+    `Inspect again (inspectionNotes): since the inspection of ${
+      c.inspection.at.slice(0, 10)
+    } the registry shows a concern with the ${
+      unseen.map((r) => r.key).join(", ")
+    }.`,
+  ];
+}
+
+/** Terms, then each party's own agreement to them. */
+function handshakeBlockers(c: Candidate, to: Agreement): string[] {
+  if (!c[TERMS[to]]) {
+    return [
+      to === "collaboration"
+        ? "Record the terms of the trial: scope and care responsibilities (collaborationAgreement)."
+        : "Record the terms of the adoption: maintenance and support responsibilities (adoptionAgreement).",
+    ];
+  }
+  return (["platform", "source"] as const)
+    .filter((party) => !c.consents[to][party])
+    .map((party) =>
+      `Record that ${
+        PARTY_NAMES[party]
+      } agrees to the ${to} terms (agree to=${to} party=${party}).`
+    );
+}
+
+/** What a trial needs: named parties, a negotiation, an inspection, a handshake. */
+function collaborationBlockers(c: Candidate): string[] {
   const out: string[] = [];
   if (!c.platform) out.push("Name the adopting platform (platform).");
   if (!c.steward) out.push("Name the steward (steward).");
   if (!c.negotiationNotes) {
     out.push("Record the negotiation notes (negotiationNotes).");
   }
-  if (!c.collaborationAgreement) {
-    out.push(
-      "Record both parties' agreement to collaborate (collaborationAgreement).",
-    );
-  }
+  out.push(...inspectionBlockers(c));
+  out.push(...handshakeBlockers(c, "collaboration"));
+  return out;
+}
+
+function adoptionBlockers(c: Candidate): string[] {
+  const out = collaborationBlockers(c);
   if (!c.collaborationNotes) {
     out.push(
       "Record trial feedback and the originating team's needs (collaborationNotes).",
     );
   }
-  if (!c.adoptionAgreement) {
+  out.push(...handshakeBlockers(c, "adoption"));
+  if (!c.credit) {
     out.push(
-      "Record both parties' adoption agreement and responsibilities (adoptionAgreement).",
+      "Record the value recognised and attribute it back to the original grouping (credit).",
     );
   }
-  if (!c.credit) out.push("Credit the original author (credit).");
   if (!c.offeringRef) {
     out.push(
       "Link the usable offering, documentation and support route (offeringRef).",
@@ -352,7 +565,7 @@ export function blockers(candidate: Candidate, to: Stage): string[] {
   }
   if (c.stage === 6) {
     return [
-      "Stage 6 does not restart; keep the agreement and record reuseNotes.",
+      "Stage 6 does not restart; what it makes possible is a new call (openCall follows=).",
     ];
   }
   if (to !== c.stage + 1) return ["Move only to the next stage."];
@@ -390,16 +603,7 @@ export function blockers(candidate: Candidate, to: Stage): string[] {
       }
       break;
     case 4:
-      if (!c.platform) out.push("Name the adopting platform (platform).");
-      if (!c.steward) out.push("Name the steward (steward).");
-      if (!c.negotiationNotes) {
-        out.push("Record the negotiation notes (negotiationNotes).");
-      }
-      if (!c.collaborationAgreement) {
-        out.push(
-          "Record both parties' agreement to collaborate (collaborationAgreement).",
-        );
-      }
+      out.push(...collaborationBlockers(c));
       break;
     case 5:
       out.push(...adoptionBlockers(c));
@@ -448,19 +652,35 @@ export function advance(
   return moved;
 }
 
-/** Defer, decline, resume or adopt without discarding evidence or ownership. */
+/**
+ * Defer, decline, resume, adopt or retire without discarding evidence or
+ * ownership. Retiring ends an adoption: the platform stops offering the
+ * capability, and the record stays.
+ */
 export function decide(
   candidate: Candidate,
   outcome: Outcome,
   note: string,
   now: string = new Date().toISOString(),
 ): Candidate {
-  if (!["active", "deferred", "declined", "adopted"].includes(outcome)) {
+  if (!OUTCOMES.includes(outcome)) {
     throw new Error("Unknown harvesting outcome.");
   }
   if (!note.trim()) throw new Error("A decision needs a reason.");
-  if (candidate.outcome === "adopted") {
-    throw new Error("Keep the adoption agreement; record reuseNotes instead.");
+  if (candidate.outcome === "retired") {
+    throw new Error(
+      "A retired adoption stays as history; what follows it is a new call or candidate.",
+    );
+  }
+  if (candidate.outcome === "adopted" && outcome !== "retired") {
+    throw new Error(
+      "An adoption ends only with outcome=retired and a reason; until then record reuseNotes.",
+    );
+  }
+  if (outcome === "retired" && candidate.outcome !== "adopted") {
+    throw new Error(
+      "Only an adopted capability is retired; before adoption use deferred or declined.",
+    );
   }
   if (outcome === "adopted") {
     if (candidate.outcome !== "active" || candidate.stage < 5) {
@@ -497,26 +717,21 @@ export function flags(candidate: Candidate): string[] {
   const facts = candidate.facts;
   if (facts?.labels.includes(CORE_LABEL) && candidate.outcome !== "adopted") {
     out.push(
-      `Has the '${CORE_LABEL}' label but no explicit adoption is recorded.`,
+      candidate.outcome === "retired"
+        ? `Still has the '${CORE_LABEL}' label after the adoption was retired.`
+        : `Has the '${CORE_LABEL}' label but no explicit adoption is recorded.`,
     );
   }
-  if (candidate.stage === 6 && candidate.outcome !== "adopted") {
+  if (
+    candidate.stage === 6 && candidate.outcome !== "adopted" &&
+    candidate.outcome !== "retired"
+  ) {
     out.push(
       "Legacy stage 6: review the agreement before recording adoption with decide.",
     );
   }
-  if (facts) {
-    if (!facts.license) {
-      out.push("Readiness: review the missing licence before reuse.");
-    }
-    if (!facts.repositoryVerified) {
-      out.push("Readiness: the repository is not verified.");
-    }
-    if ((facts.scorePercentage ?? 0) < MIN_SCORE) {
-      out.push(
-        `Readiness: quality score is below the local guideline of ${MIN_SCORE}.`,
-      );
-    }
+  for (const concern of readiness(facts)) {
+    out.push(`Readiness: ${concern.text}`);
   }
   return out;
 }
@@ -540,20 +755,5 @@ export function parseInfo(info: Record<string, unknown>): RegistryFacts {
       ? score.percentage
       : null,
     pullCount: info.pullCount,
-  };
-}
-
-/** Pick the username and collectives out of `swamp auth whoami --json`. */
-export function parseWhoami(
-  who: Record<string, unknown>,
-): { username: string; collectives: string[] } {
-  if (typeof who.username !== "string") {
-    throw new Error("Not signed in: run `swamp auth login`.");
-  }
-  return {
-    username: who.username,
-    collectives: Array.isArray(who.collectives)
-      ? who.collectives.filter((c): c is string => typeof c === "string")
-      : [],
   };
 }

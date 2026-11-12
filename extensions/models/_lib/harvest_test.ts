@@ -8,6 +8,8 @@ import { assert, assertEquals, assertThrows } from "jsr:@std/assert@1";
 import {
   addReading,
   advance,
+  agree,
+  type Agreement,
   answerCall,
   blockers,
   type Candidate,
@@ -18,7 +20,6 @@ import {
   newCall,
   newCandidate,
   parseInfo,
-  parseWhoami,
   readToday,
   record,
   type RegistryFacts,
@@ -32,6 +33,40 @@ const T2 = "2026-11-20T09:00:00.000Z";
 /** A candidate placed at any stage, as if it had been advanced there. */
 function at(stage: Stage, extension = "@a/b"): Candidate {
   return { ...newCandidate(extension, 1, T0), stage };
+}
+
+/** Both parties agree to the recorded terms. */
+function shake(c: Candidate, to: Agreement, now = T1): Candidate {
+  return agree(
+    agree(c, to, "platform", "platform-team", now),
+    to,
+    "source",
+    "payments team",
+    now,
+  );
+}
+
+/** A candidate at stage 4 with everything a trial needs except the handshake. */
+function negotiated(): Candidate {
+  return record(at(4), {
+    steward: "platform-team",
+    platform: "developer platform",
+    negotiationNotes: "Discussed responsibilities",
+    inspectionNotes: "Read the code and docs; nothing blocks a trial.",
+    collaborationAgreement: "Two-team trial; source team retains care.",
+  }, T0);
+}
+
+/** A candidate at stage 5 with everything adoption needs. */
+function adoptable(): Candidate {
+  let c = advance(shake(negotiated(), "collaboration"), 5, "trial", T1);
+  c = record(c, {
+    collaborationNotes: "Trial feedback led to a simpler setup",
+    adoptionAgreement: "Platform supports it; use stays optional",
+    credit: "Payments team: built it and cut onboarding to 30 minutes",
+    offeringRef: "https://example.com/tool/docs-and-support",
+  }, T1);
+  return shake(c, "adoption");
 }
 
 const good: RegistryFacts = {
@@ -174,10 +209,11 @@ Deno.test("entering stage 5 stores the latest pull count as the baseline", () =>
     steward: "platform-team",
     platform: "developer platform",
     negotiationNotes: "agreed",
+    inspectionNotes: "Code and licence reviewed",
     collaborationAgreement:
       "Both teams agree to a trial; source team retains care.",
   });
-  const next = advance(c, 5, "handover", T1);
+  const next = advance(shake(c, "collaboration"), 5, "handover", T1);
   assertEquals(next.baselinePulls, 40);
 });
 
@@ -250,17 +286,6 @@ Deno.test("parseInfo refuses output without a pull count", () => {
   assertThrows(() => parseInfo({ name: "@a/b" }), Error, "pullCount");
 });
 
-Deno.test("parseWhoami keeps only the username and collectives", () => {
-  const who = parseWhoami({
-    authenticated: true,
-    username: "ada",
-    email: "ada@example.com",
-    name: "Ada L",
-    collectives: ["acme", "ada"],
-  });
-  assertEquals(who, { username: "ada", collectives: ["acme", "ada"] });
-});
-
 Deno.test("a call names a need and the platform asking, before any candidate", () => {
   const call = newCall(
     "faster-onboarding",
@@ -277,6 +302,7 @@ Deno.test("a call names a need and the platform asking, before any candidate", (
     openedAt: T0,
     closedAt: null,
     closeNote: null,
+    follows: null,
   });
   assertThrows(() => newCall("Faster Onboarding", "x", "p"), Error, "call id");
   assertThrows(() => newCall("a", " ", "p"), Error, "need");
@@ -332,18 +358,20 @@ Deno.test("a useful capability can be adopted without registry popularity or lab
     steward: "platform-team",
     negotiationNotes:
       "Source team keeps upstream development; platform supports integration",
+    inspectionNotes: "Platform read the code, docs and licence",
     collaborationAgreement:
-      "Both teams accepted the trial scope and care responsibilities",
+      "Trial with two teams; source team keeps care during the trial",
     collaborationNotes:
       "Trial feedback led to a simpler setup; source team's needs retained",
-    adoptionAgreement:
-      "Both teams accepted support responsibilities; use stays optional",
+    adoptionAgreement: "Platform supports the integration; use stays optional",
     credit: "Payments team",
   });
+  c = shake(c, "collaboration");
   for (const to of [1, 2, 3, 4, 5] as Stage[]) {
     c = advance(c, to, "evidence reviewed", T1);
   }
   assertEquals(c.baselinePulls, null);
+  c = shake(c, "adoption");
   assertThrows(() => decide(c, "adopted", "agree"), Error, "offeringRef");
   c = record(c, { offeringRef: "https://example.com/tool/docs-and-support" });
   assertThrows(() => decide(c, "adopted", "  "), Error, "reason");
@@ -375,8 +403,229 @@ Deno.test("a useful capability can be adopted without registry popularity or lab
   assertThrows(
     () => decide(adopted, "active", "restart"),
     Error,
-    "Keep the adoption agreement",
+    "ends only with outcome=retired",
   );
+});
+
+Deno.test("a handshake needs each party's own agreement, not text that mentions one", () => {
+  const refused = record(negotiated(), {
+    collaborationAgreement: "The payments team refused the trial.",
+  });
+  assertThrows(() => advance(refused, 5, "go"), Error, "party=source");
+
+  const oneSided = agree(
+    negotiated(),
+    "collaboration",
+    "platform",
+    "platform-team",
+    T1,
+  );
+  assertEquals(blockers(oneSided, 5), [
+    "Record that the original grouping agrees to the collaboration terms (agree to=collaboration party=source).",
+  ]);
+  // The platform agreeing twice is still one party.
+  assertEquals(
+    blockers(agree(oneSided, "collaboration", "platform", "cto", T2), 5).length,
+    1,
+  );
+
+  const both = agree(oneSided, "collaboration", "source", "payments team", T2);
+  assertEquals(both.consents.collaboration, {
+    platform: { by: "platform-team", at: T1 },
+    source: { by: "payments team", at: T2 },
+  });
+  assertEquals(advance(both, 5, "trial").stage, 5);
+});
+
+Deno.test("agreement is to recorded terms, and new terms need agreeing again", () => {
+  const bare = record(at(4), { negotiationNotes: "Talking" });
+  assertThrows(
+    () => agree(bare, "collaboration", "source", "payments team"),
+    Error,
+    "collaborationAgreement",
+  );
+  assertThrows(
+    () => agree(negotiated(), "collaboration", "source", "  "),
+    Error,
+    "by",
+  );
+  const shaken = shake(negotiated(), "collaboration");
+  // Recording the same terms again changes nothing.
+  assertEquals(
+    record(shaken, {
+      collaborationAgreement: "Two-team trial; source team retains care.",
+    }).consents,
+    shaken.consents,
+  );
+  const changed = record(shaken, {
+    collaborationAgreement: "Platform takes over care during the trial.",
+  });
+  assertEquals(changed.consents.collaboration, {
+    platform: null,
+    source: null,
+  });
+  assertEquals(blockers(changed, 5).length, 2);
+});
+
+Deno.test("adoption is agreed separately, after the trial, by both parties", () => {
+  const early = record(shake(negotiated(), "collaboration"), {
+    adoptionAgreement: "Platform supports it",
+  });
+  assertThrows(
+    () => agree(early, "adoption", "platform", "platform-team"),
+    Error,
+    "stage 5",
+  );
+  const ready = adoptable();
+  const half: Candidate = {
+    ...ready,
+    consents: {
+      ...ready.consents,
+      adoption: { ...ready.consents.adoption, source: null },
+    },
+  };
+  // Agreeing to the trial is not agreeing to hand the capability over.
+  assertThrows(
+    () => decide(half, "adopted", "Platform wants it"),
+    Error,
+    "agree to=adoption party=source",
+  );
+  assertEquals(decide(ready, "adopted", "Both agreed", T2).stage, 6);
+});
+
+Deno.test("the platform inspects before the handshake", () => {
+  const { inspection: _, ...rest } = negotiated();
+  const uninspected = shake(
+    { ...rest, inspection: null },
+    "collaboration",
+  );
+  assertThrows(() => advance(uninspected, 5, "go"), Error, "inspectionNotes");
+  assertThrows(
+    () => decide({ ...adoptable(), inspection: null }, "adopted", "go"),
+    Error,
+    "inspectionNotes",
+  );
+});
+
+Deno.test("an inspection covers the concerns the registry showed, and no later ones", () => {
+  const poor = { ...good, license: null, scorePercentage: 38 };
+  // Inspected with the concerns in view: a person has judged them, so they stay advice.
+  let seen = addReading(at(4), poor, T0);
+  seen = record(seen, {
+    steward: "platform-team",
+    platform: "developer platform",
+    negotiationNotes: "Discussed",
+    inspectionNotes: "No licence yet: source team adds MIT before adoption.",
+    collaborationAgreement: "Trial",
+  }, T1);
+  assertEquals(seen.inspection, {
+    notes: "No licence yet: source team adds MIT before adoption.",
+    at: T1,
+    seen: ["licence", "score"],
+  });
+  seen = shake(seen, "collaboration");
+  assertEquals(blockers(seen, 5), []);
+  assertEquals(flags(seen).length, 2);
+
+  // Inspected before the registry showed anything wrong.
+  const stale = addReading(
+    shake(negotiated(), "collaboration"),
+    { ...poor, repositoryVerified: false },
+    T2,
+  );
+  assertEquals(blockers(stale, 5), [
+    "Inspect again (inspectionNotes): since the inspection of 2026-11-06 the registry shows a concern with the licence, repository, score.",
+  ]);
+  const again = record(stale, { inspectionNotes: "Reviewed all three." }, T2);
+  assertEquals(blockers(again, 5), []);
+});
+
+Deno.test("adoption attributes the value back to the original grouping", () => {
+  const { credit: _, ...rest } = adoptable();
+  assertThrows(
+    () => decide({ ...rest, credit: null }, "adopted", "go"),
+    Error,
+    "attribute it back to the original grouping (credit)",
+  );
+});
+
+Deno.test("what both parties agreed cannot be rewritten after adoption", () => {
+  const adopted = decide(adoptable(), "adopted", "Both agreed", T2);
+  for (
+    const field of ["adoptionAgreement", "collaborationAgreement", "credit"]
+  ) {
+    assertThrows(
+      () => record(adopted, { [field]: "rewritten" }),
+      Error,
+      "kept as agreed",
+    );
+  }
+  assertThrows(
+    () => agree(adopted, "adoption", "source", "someone else"),
+    Error,
+    "only an active candidate",
+  );
+  assertEquals(
+    record(adopted, { reuseNotes: "Two teams use it" }).reuseNotes,
+    "Two teams use it",
+  );
+});
+
+Deno.test("an adoption can be retired with a reason, keeping its record", () => {
+  assertThrows(
+    () => decide(adoptable(), "retired", "skip"),
+    Error,
+    "Only an adopted capability is retired",
+  );
+  const adopted = decide(adoptable(), "adopted", "Both agreed", T1);
+  assertThrows(() => decide(adopted, "retired", " "), Error, "reason");
+  const retired = decide(
+    adopted,
+    "retired",
+    "Superseded by the registry's own onboarding",
+    T2,
+  );
+  assertEquals(retired.outcome, "retired");
+  assertEquals(retired.stage, 6);
+  assertEquals(retired.decisions.map((d) => d.outcome), ["adopted", "retired"]);
+  assertEquals(retired.credit, adopted.credit);
+  assertEquals(retired.adoptionAgreement, adopted.adoptionAgreement);
+  assertEquals(retired.consents, adopted.consents);
+  assertEquals(retired.history, adopted.history);
+  for (const outcome of ["active", "adopted", "deferred", "retired"] as const) {
+    assertThrows(
+      () => decide(retired, outcome, "again"),
+      Error,
+      "stays as history",
+    );
+  }
+  assertThrows(() => advance(retired, 0, "restart"), Error, "never resets");
+  const labelled = addReading(retired, { ...good, labels: [CORE_LABEL] }, T2);
+  assertEquals(flags(labelled), [
+    `Still has the '${CORE_LABEL}' label after the adoption was retired.`,
+  ]);
+});
+
+Deno.test("a new call can follow from an adopted capability, which keeps its record", () => {
+  assertThrows(
+    () => newCall("next", "Audit trail", "data platform", null, T2, at(5)),
+    Error,
+    "follows an adopted capability",
+  );
+  const adopted = decide(adoptable(), "adopted", "Both agreed", T1);
+  const call = newCall(
+    "audit",
+    "Audit trail built on the onboarding events",
+    "data platform",
+    null,
+    T2,
+    adopted,
+  );
+  assertEquals(call.follows, "@a/b");
+  assertEquals(adopted.stage, 6);
+  // A retired capability may still have led somewhere.
+  const retired = decide(adopted, "retired", "Superseded", T2);
+  assertEquals(newCall("b", "x", "p", null, T2, retired).follows, "@a/b");
 });
 
 Deno.test("defer and decline retain evidence and require a reasoned resume", () => {

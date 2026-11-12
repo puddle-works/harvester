@@ -6,6 +6,7 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
 import {
   addReading,
+  agree,
   answerCall,
   closeCall,
   decide,
@@ -69,7 +70,7 @@ Deno.test("the HTML report shows blockers, escapes names and counts who can move
   const html = renderReportHtml([stuck, ready], T1);
   assert(
     html.includes(
-      "1 ready · 1 waiting for evidence · 0 adopted, paused or under review",
+      "1 ready · 1 waiting for evidence · 0 adopted, retired, paused or under review",
     ),
   );
   assert(html.includes("flowEvidence"));
@@ -102,16 +103,31 @@ Deno.test("reports distinguish closed outcomes and legacy adoption from missing 
     reuseNotes: "No voluntary uptake <yet>",
   };
   const legacy = { ...candidate, extension: "@a/legacy", stage: 6 as const };
-  const candidates = [deferred, declined, adopted, legacy];
+  const retired = decide(
+    { ...adopted, extension: "@a/retired" },
+    "retired",
+    "Superseded <2027>",
+    T1,
+  );
+  const candidates = [deferred, declined, adopted, legacy, retired];
   const html = renderReportHtml(candidates, T1);
   assert(
     html.includes(
-      "0 ready · 0 waiting for evidence · 4 adopted, paused or under review",
+      "0 ready · 0 waiting for evidence · 5 adopted, retired, paused or under review",
     ),
   );
-  for (const label of ["Deferred", "Declined", "Adopted", "Review adoption"]) {
-    assert(html.includes(label));
+  for (
+    const label of [
+      "Deferred",
+      "Declined",
+      "Adopted",
+      "Review adoption",
+      "Retired",
+    ]
+  ) {
+    assert(html.includes(`">${label}</span>`), label);
   }
+  assert(html.includes("Superseded &lt;2027&gt;"));
   assert(
     html.includes("No capacity &lt;yet&gt;") &&
       !html.includes("No capacity <yet>"),
@@ -124,7 +140,69 @@ Deno.test("reports distinguish closed outcomes and legacy adoption from missing 
     assert(report.includes("current owner retains care"));
     assert(report.includes("Legacy stage 6"));
     assert(report.includes("Reuse review:"));
+    assert(report.includes("No longer offered by the platform."));
   }
+});
+
+Deno.test("reports show which party has agreed, the inspection and the attribution", () => {
+  let c = record({ ...newCandidate("@a/tool", 1, T0), stage: 4 }, {
+    platform: "developer platform",
+    steward: "platform-team",
+    negotiationNotes: "Discussed",
+    inspectionNotes: "Read the <code>",
+    collaborationAgreement: "Two-team trial",
+    credit: "Payments team: cut onboarding to 30 minutes",
+  }, T0);
+  c = agree(c, "collaboration", "platform", "platform-team", T1);
+  const md = renderReport([c], T1);
+  assert(
+    md.includes(
+      "Trial handshake – platform: agreed (platform-team); original grouping: not recorded.",
+    ),
+  );
+  assert(md.includes("Inspected 2026-11-06: Read the <code>"));
+  assert(
+    md.includes(
+      "Value attributed to the original grouping: Payments team: cut onboarding to 30 minutes",
+    ),
+  );
+  assert(md.includes("- Record that the original grouping agrees"));
+  assert(!md.includes("Adoption handshake"));
+  const html = renderReportHtml([c], T1);
+  assert(html.includes("Read the &lt;code&gt;") && !html.includes("<code>"));
+  assert(html.includes("original grouping: not recorded"));
+  assert(html.includes('<span class="badge waiting">Waiting</span>'));
+});
+
+Deno.test("reports show the calls an adopted capability led to: the 6 to 0 arrow", () => {
+  const adopted = {
+    ...newCandidate("@payments/tool", 1, T0),
+    stage: 6 as const,
+    outcome: "adopted" as const,
+  };
+  const other = { ...adopted, extension: "@search/kit" };
+  const next = newCall("audit", "Audit trail", "data", null, T1, adopted);
+  const done = closeCall(
+    newCall("billing", "Billing events", "data", null, T0, adopted),
+    "Answered",
+    T1,
+  );
+  const unrelated = newCall("search", "Search", "dev", null, T0);
+  const calls = [next, done, unrelated];
+  const md = renderReport([adopted, other], T1, calls);
+  assert(
+    md.includes(
+      "| audit | data | Audit trail | – | @payments/tool | open | no candidate yet: look for one |",
+    ),
+  );
+  assert(md.includes("| search | dev | Search | – | – | open |"));
+  assertEquals(
+    md.split("\n").filter((l) => l.startsWith("Led to calls:")),
+    ["Led to calls: audit, billing (closed)."],
+  );
+  const html = renderReportHtml([adopted, other], T1, calls);
+  assert(html.includes("Follows from: @payments/tool."));
+  assertEquals(html.split("Led to calls: audit, billing (closed).").length, 2);
 });
 
 Deno.test("reports list calls, who answers them and which still need a candidate", () => {
@@ -150,9 +228,9 @@ Deno.test("reports list calls, who answers them and which still need a candidate
     /^\| (onboarding|audit|search) /.test(l)
   );
   assertEquals(rows, [
-    "| onboarding | dev | Quicker \\| safer onboarding | – | open | @payments/tool (stage 1, active), @search/kit (stage 1, active) |",
-    "| audit | data platform | Audit <trail> | Lab 7 | open | no candidate yet: look for one |",
-    "| search | dev | Search | – | closed: No longer needed | – |",
+    "| onboarding | dev | Quicker \\| safer onboarding | – | – | open | @payments/tool (stage 1, active), @search/kit (stage 1, active) |",
+    "| audit | data platform | Audit <trail> | Lab 7 | – | open | no candidate yet: look for one |",
+    "| search | dev | Search | – | – | closed: No longer needed | – |",
   ]);
   assert(md.includes("Answers call: onboarding."));
 

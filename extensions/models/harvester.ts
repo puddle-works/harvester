@@ -4,8 +4,8 @@
  *
  * It records and reports; a person decides. It never deprecates, transfers or
  * contacts anyone. A platform may track a capability from any collective, as
- * Skelton's platform harvests from outside itself. Only `username` and
- * `collectives` are read from the account.
+ * Skelton's platform harvests from outside itself. Nothing is read from the
+ * account.
  *
  * Output: a `candidates` resource holding every call for capabilities and
  * every tracked extension, and the weekly `report` as a markdown file and as
@@ -17,6 +17,8 @@ import { z } from "npm:zod@4";
 import {
   addReading,
   advance,
+  agree,
+  type Agreement,
   answerCall,
   type Call,
   type Candidate,
@@ -24,9 +26,10 @@ import {
   decide,
   newCall,
   newCandidate,
+  noConsents,
   type Outcome,
   parseInfo,
-  parseWhoami,
+  type Party,
   readToday,
   record,
   type RegistryFacts,
@@ -38,7 +41,22 @@ import { renderReport, renderReportHtml } from "./_lib/report.ts";
 export const GlobalArgsSchema = z.object({});
 
 const StageSchema = z.number().int().min(0).max(6);
-const OutcomeSchema = z.enum(["active", "deferred", "declined", "adopted"]);
+const OutcomeSchema = z.enum([
+  "active",
+  "deferred",
+  "declined",
+  "adopted",
+  "retired",
+]);
+const AgreementSchema = z.enum(["collaboration", "adoption"]);
+const PartySchema = z.enum(["platform", "source"]);
+const ConsentSchema = z.object({ by: z.string(), at: z.string() }).nullable()
+  .default(null);
+// Records written before each party agreed separately have no consents.
+const HandshakeSchema = z.object({
+  platform: ConsentSchema,
+  source: ConsentSchema,
+}).default(() => ({ platform: null, source: null }));
 
 const CandidateSchema = z.object({
   extension: z.string(),
@@ -63,9 +81,18 @@ const CandidateSchema = z.object({
   showcases: z.array(z.object({ where: z.string(), at: z.string() })),
   interest: z.string().nullable().default(null),
   negotiationNotes: z.string().nullable(),
+  inspection: z.object({
+    notes: z.string(),
+    at: z.string(),
+    seen: z.array(z.enum(["licence", "repository", "score"])),
+  }).nullable().default(null),
   collaborationAgreement: z.string().nullable().default(null),
   collaborationNotes: z.string().nullable().default(null),
   adoptionAgreement: z.string().nullable().default(null),
+  consents: z.object({
+    collaboration: HandshakeSchema,
+    adoption: HandshakeSchema,
+  }).default(noConsents),
   offeringRef: z.string().nullable().default(null),
   reuseNotes: z.string().nullable().default(null),
   decision: z.string().nullable(),
@@ -100,6 +127,7 @@ const CallSchema = z.object({
   openedAt: z.string(),
   closedAt: z.string().nullable(),
   closeNote: z.string().nullable(),
+  follows: z.string().nullable().default(null),
 });
 
 /** What is stored: every tracked extension by name, and every call by id. */
@@ -111,7 +139,6 @@ export const CandidatesSchema = z.object({
 
 /** How the model reads the registry. Tests pass a stub. */
 export interface RegistryPort {
-  whoami(): Promise<{ username: string; collectives: string[] }>;
   info(extension: string): Promise<RegistryFacts>;
 }
 
@@ -131,7 +158,6 @@ async function swampJson(args: string[]): Promise<Record<string, unknown>> {
 
 /** The real registry, read through the swamp CLI. */
 export const swampRegistry: RegistryPort = {
-  whoami: async () => parseWhoami(await swampJson(["auth", "whoami"])),
   info: async (extension) =>
     parseInfo(await swampJson(["extension", "info", extension])),
 };
@@ -212,7 +238,7 @@ export const model = {
     {
       toVersion: "2026.11.12.1",
       description:
-        "Adds calls for capabilities, tracking from any collective, and negotiated adoption evidence and outcomes. Existing resource evidence is preserved; missing fields default on read without inferring adoption.",
+        "Adds calls for capabilities (including calls that follow from an adopted capability), tracking from any collective, a platform inspection, each party's own agreement to a trial and to adoption, and reasoned outcomes including retiring an adoption. Existing resource evidence is preserved; missing fields default on read without inferring agreement or adoption.",
       upgradeAttributes: (old: Record<string, unknown>) => old,
     },
   ],
@@ -243,7 +269,7 @@ export const model = {
   methods: {
     openCall: {
       description:
-        "Open a call for a capability a platform needs (stage 0). No candidate is needed yet, and several may answer.",
+        "Open a call for a capability a platform needs (stage 0). No candidate is needed yet, and several may answer. Pass follows when an adopted capability made the call possible.",
       arguments: z.object({
         id: z.string().describe("A short id, such as faster-onboarding."),
         need: z.string().describe("The capability needed and for whom."),
@@ -251,9 +277,18 @@ export const model = {
         ref: z.string().optional().describe(
           "Where the call is posted, such as a Lab request.",
         ),
+        follows: z.string().optional().describe(
+          "The adopted extension this call follows from (the diagram's 6 to 0 arrow).",
+        ),
       }),
       execute: async (
-        args: { id: string; need: string; platform: string; ref?: string },
+        args: {
+          id: string;
+          need: string;
+          platform: string;
+          ref?: string;
+          follows?: string;
+        },
         context: Ctx,
       ) => {
         const store = await load(context);
@@ -265,6 +300,8 @@ export const model = {
           args.need,
           args.platform,
           args.ref ?? null,
+          undefined,
+          args.follows === undefined ? null : tracked(store, args.follows),
         );
         context.logger.info("Opened call {id}", { id: args.id });
         return save(context, store);
@@ -343,14 +380,17 @@ export const model = {
           "Interested consumers/platforms and their feedback; not an adoption commitment.",
         ),
         negotiationNotes: z.string().optional(),
+        inspectionNotes: z.string().optional().describe(
+          "What the platform inspected and found, including any readiness flags. Replaces the last inspection.",
+        ),
         collaborationAgreement: z.string().optional().describe(
-          "Both parties' agreement to a trial, including scope and care responsibilities.",
+          "The terms of the trial: scope and care responsibilities. Each party agrees with agree; new terms clear earlier agreement.",
         ),
         collaborationNotes: z.string().optional().describe(
           "Trial feedback, original team's needs and resulting changes.",
         ),
         adoptionAgreement: z.string().optional().describe(
-          "Both parties' acceptance and maintenance/support responsibilities; consumers remain free to choose.",
+          "The terms of the adoption: maintenance and support responsibilities; consumers remain free to choose. Each party agrees with agree.",
         ),
         offeringRef: z.string().optional().describe(
           "Link to the usable offering, documentation and support route.",
@@ -361,7 +401,9 @@ export const model = {
         decision: z.string().optional().describe(
           "Legacy free-text notes only. Use decide to set an outcome.",
         ),
-        credit: z.string().optional(),
+        credit: z.string().optional().describe(
+          "The value recognised, attributed back to the original grouping.",
+        ),
       }),
       execute: async (
         args: { extension: string } & Record<string, string | undefined>,
@@ -376,9 +418,36 @@ export const model = {
         return save(context, store);
       },
     },
+    agree: {
+      description:
+        "Record that one party agrees to the recorded terms of the trial (collaboration) or of the adoption. The handshake needs the platform and the original grouping to agree separately.",
+      arguments: z.object({
+        extension: z.string(),
+        to: AgreementSchema,
+        party: PartySchema.describe(
+          "platform, or source for the original grouping.",
+        ),
+        by: z.string().trim().min(1).describe(
+          "The team or role that agreed; no contact details.",
+        ),
+      }),
+      execute: async (
+        args: { extension: string; to: Agreement; party: Party; by: string },
+        context: Ctx,
+      ) => {
+        const store = await load(context);
+        store.candidates[args.extension] = agree(
+          tracked(store, args.extension),
+          args.to,
+          args.party,
+          args.by,
+        );
+        return save(context, store);
+      },
+    },
     decide: {
       description:
-        "Record a reasoned defer, decline, resume (active), or adoption decision. Adoption requires agreement evidence at stage 5 and records stage 6. No registry writes or ownership transfer.",
+        "Record a reasoned defer, decline, resume (active), adoption or retirement decision. Adoption requires an inspection and both parties' agreement at stage 5, and records stage 6. Retiring ends an adoption and keeps its record. No registry writes or ownership transfer.",
       arguments: z.object({
         extension: z.string(),
         outcome: OutcomeSchema,
@@ -442,7 +511,7 @@ export const model = {
     },
     advance: {
       description:
-        "Move through activities 0–5 once their evidence is recorded. Use decide for adoption; stage 6 never loops back.",
+        "Move through activities 0–5 once their evidence is recorded. Use decide for adoption; stage 6 never loops back, and what follows it is a new call.",
       arguments: z.object({
         extension: z.string(),
         to: StageSchema,

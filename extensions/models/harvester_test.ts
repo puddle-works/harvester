@@ -12,6 +12,7 @@ import {
   type Candidate,
   newCall,
   newCandidate,
+  noConsents,
   type RegistryFacts,
 } from "./_lib/harvest.ts";
 
@@ -26,7 +27,6 @@ const facts: RegistryFacts = {
 
 function registry(pulls = 40): RegistryPort {
   return {
-    whoami: () => Promise.resolve({ username: "ada", collectives: ["acme"] }),
     info: () => Promise.resolve({ ...facts, pullCount: pulls }),
   };
 }
@@ -411,6 +411,9 @@ Deno.test("old stage 6 data retains its evidence without inferring adoption", as
   const c = saved.candidates["@acme/tool"];
   assertEquals(c.outcome, "active");
   assertEquals(c.decisions, []);
+  // Old text never becomes an inspection or either party's agreement.
+  assertEquals(c.inspection, null);
+  assertEquals(c.consents, noConsents());
   for (const key of Object.keys(legacy) as (keyof typeof legacy)[]) {
     assertEquals(c[key], legacy[key]);
   }
@@ -430,18 +433,147 @@ Deno.test("old stage 6 data retains its evidence without inferring adoption", as
       },
     },
   });
+  // The old agreement text is terms only: each party still has to agree.
+  await assertRejects(
+    () =>
+      model.methods.decide.execute({
+        extension: "@acme/tool",
+        outcome: "adopted",
+        note: "Agreement reviewed",
+      }, second.context),
+    Error,
+    "party=source",
+  );
+  const consent = { by: "payments team", at: "2026-11-10T09:00:00.000Z" };
+  const reviewed = createModelTestContext({
+    storedResources: {
+      candidates: {
+        candidates: {
+          "@acme/tool": {
+            ...c,
+            platform: "developer platform",
+            inspection: {
+              notes: "Reviewed",
+              at: "2026-11-10T09:00:00.000Z",
+              seen: [],
+            },
+            collaborationAgreement: "Both teams agreed to trial",
+            collaborationNotes: "Trial worked",
+            adoptionAgreement: "Both teams approved support responsibilities",
+            consents: {
+              collaboration: { platform: consent, source: consent },
+              adoption: { platform: consent, source: consent },
+            },
+            offeringRef: "https://example.com/tool/docs",
+          },
+        },
+      },
+    },
+  });
   await model.methods.decide.execute({
     extension: "@acme/tool",
     outcome: "adopted",
     note: "Agreement reviewed",
-  }, second.context);
-  const adopted = (second.getWrittenResources()[0].data as unknown as {
+  }, reviewed.context);
+  const adopted = (reviewed.getWrittenResources()[0].data as unknown as {
     candidates: Record<string, Candidate>;
   }).candidates["@acme/tool"];
   assertEquals(adopted.outcome, "adopted");
   assertEquals(adopted.stageEnteredAt, legacy.stageEnteredAt);
   assertEquals(adopted.credit, legacy.credit);
   assertEquals(adopted.cycle, 2);
+});
+
+Deno.test("agree stores one party's agreement and refuses a party it does not know", async () => {
+  const candidate = {
+    ...newCandidate("@acme/tool"),
+    stage: 4,
+    collaborationAgreement: "Two-team trial",
+  };
+  const { context, getWrittenResources } = createModelTestContext({
+    storedResources: {
+      candidates: { candidates: { "@acme/tool": candidate } },
+    },
+  });
+  await model.methods.agree.execute({
+    extension: "@acme/tool",
+    to: "collaboration",
+    party: "source",
+    by: "payments team",
+  }, context);
+  const consents =
+    written(getWrittenResources).candidates["@acme/tool"].consents;
+  assertEquals(consents.collaboration.source?.by, "payments team");
+  assertEquals(consents.collaboration.platform, null);
+  assertEquals(consents.adoption, { platform: null, source: null });
+  assertEquals(
+    model.methods.agree.arguments.safeParse({
+      extension: "@acme/tool",
+      to: "collaboration",
+      party: "both",
+      by: "x",
+    }).success,
+    false,
+  );
+});
+
+Deno.test("openCall follows an adopted extension only, and a retirement is stored", async () => {
+  const adopted = {
+    ...newCandidate("@acme/tool"),
+    stage: 6,
+    outcome: "adopted",
+    credit: "Payments team",
+  };
+  const stored = {
+    candidates: {
+      "@acme/tool": adopted,
+      "@acme/new": newCandidate("@acme/new"),
+    },
+  };
+  const { context, getWrittenResources } = createModelTestContext({
+    storedResources: { candidates: stored },
+  });
+  for (
+    const [follows, message] of [
+      ["@acme/new", "follows an adopted capability"],
+      ["@acme/missing", "not tracked"],
+    ]
+  ) {
+    await assertRejects(
+      () =>
+        model.methods.openCall.execute({
+          id: "audit",
+          need: "Audit trail",
+          platform: "data platform",
+          follows,
+        }, context),
+      Error,
+      message,
+    );
+  }
+  assertEquals(getWrittenResources(), []);
+  await model.methods.openCall.execute({
+    id: "audit",
+    need: "Audit trail",
+    platform: "data platform",
+    follows: "@acme/tool",
+  }, context);
+  const opened = written(getWrittenResources);
+  assertEquals(opened.calls.audit.follows, "@acme/tool");
+  assertEquals(opened.candidates["@acme/tool"].stage, 6);
+
+  const next = createModelTestContext({
+    storedResources: { candidates: opened },
+  });
+  await model.methods.decide.execute({
+    extension: "@acme/tool",
+    outcome: "retired",
+    note: "Superseded",
+  }, next.context);
+  const retired = written(next.getWrittenResources);
+  assertEquals(retired.candidates["@acme/tool"].outcome, "retired");
+  assertEquals(retired.candidates["@acme/tool"].credit, "Payments team");
+  assertEquals(retired.calls.audit.follows, "@acme/tool");
 });
 
 Deno.test("report writes a markdown file", async () => {
