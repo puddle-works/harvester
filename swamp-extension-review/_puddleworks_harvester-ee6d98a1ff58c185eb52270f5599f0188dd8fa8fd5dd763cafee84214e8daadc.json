@@ -1,0 +1,82 @@
+{
+  "extension": "@puddleworks/harvester",
+  "version": "2026.11.12.1",
+  "reviewedAt": "2026-11-12T18:57:06Z",
+  "dimensions": [
+    {
+      "id": "credentials-secrets",
+      "verdict": "pass",
+      "note": "Reviewed at 0e5b6a9 plus the uncommitted review fixes (content hash ee6d98a1). No secrets are read, stored or logged. parseWhoami keeps only the username (or a collective token's collective) and collectives from `swamp auth whoami --json`; nothing from it is stored. Calls and evidence are free text a person types and are stored and reported as typed. Log lines carry ids, stage, outcome and field names only, never notes."
+    },
+    {
+      "id": "logging-quality",
+      "verdict": "pass",
+      "note": "Found: call, closeCall, answer, record, decide and advance changed state without a log line, and refresh and report logged nothing on success. Fixed: each now logs one structured info line on completion. refresh still warns per extension it cannot read. Methods log on completion only, not on entry; each does one local write."
+    },
+    {
+      "id": "error-handling",
+      "verdict": "pass",
+      "note": "Probed every refusal through the model (bad and inherited call ids, duplicate call, untracked extension, missing or closed call, blank close note, unmet stage 0): all throw a message saying what to do and write nothing. Found: report wrote the markdown file before rendering the HTML, so a render failure left one file. Fixed: both are rendered before either is written. Not fixed: swampJson does not wrap JSON.parse, so non-JSON output from swamp surfaces as a bare SyntaxError."
+    },
+    {
+      "id": "testing-completeness",
+      "verdict": "pass",
+      "note": "`make test`: 59 passed, 0 failed. New tests cover calls (open, answer, close, refusals), the model round trip with data from before calls existed, reports with unanswered calls and nothing tracked, HTML escaping, and the collective-token sign-in shape. Not unit tested: the real swampRegistry (Deno.Command), which a scratch probe ran live for whoami, info and track; and the log lines."
+    },
+    {
+      "id": "idempotency-resilience",
+      "verdict": "pass",
+      "note": "The weekly workflow runs only refresh and report. refresh skips an extension already read that UTC day (tested) and report overwrites the 'weekly' files, so reruns (maxReruns 5) are safe. Each method makes one resource write, so an interrupted run leaves the previous version. call, track and closeCall refuse a duplicate rather than return the existing record; this stops a second call replacing the need or the close note."
+    },
+    {
+      "id": "api-contracts",
+      "verdict": "pass",
+      "note": "Ran both commands live under the collective-token sign-in CI uses. Found: that sign-in prints collectiveToken and collectiveSlug but no username, so parseWhoami threw 'Not signed in' and track was unusable; confirmed on the 0e5b6a9 code and against swamp's auth_whoami renderer. Fixed: a token is accepted and acts for its own collective (tested). `swamp extension info --json` still has the field types parseInfo expects. The user-login shape was not re-run live; it is covered by the existing test and the renderer source."
+    },
+    {
+      "id": "resource-management",
+      "verdict": "pass",
+      "note": "Deno.Command(...).output() waits for the child and collects its pipes. No temporary files or connections. One candidates resource and two report files."
+    },
+    {
+      "id": "published-surface-hygiene",
+      "verdict": "pass",
+      "note": "The archive is harvester.ts with its _lib, workflow-weekly.yaml, README.md and LICENSE. README examples use @acme/tool and placeholder text; no addresses, hostnames or account ids. The dry run's only safety finding is deno-command, which the repo accepts and the README documents. `swamp extension fmt manifest.yaml --check` passes. The README now states that calls cannot be edited or reopened and that an adoption cannot be withdrawn."
+    },
+    {
+      "id": "schema-strictness",
+      "verdict": "pass",
+      "note": "No passthrough. Call ids must match ^[a-z0-9][a-z0-9-]*$ and every call and candidate lookup uses Object.hasOwn. Probed: __proto__, toString and similar ids are refused; 'constructor' matches the pattern and is stored as an ordinary own key that survives a JSON round trip and parses; answer and closeCall with hasOwnProperty, toString or valueof report no such call. Method arguments are bare z.string(), checked in the method. _registry stays z.any by design (test hook)."
+    },
+    {
+      "id": "lifetime-gc",
+      "verdict": "pass",
+      "note": "Unchanged. candidates: infinite, keeps 200 versions. report and reportHtml: infinite, keep 52 versions."
+    },
+    {
+      "id": "crud-completeness",
+      "verdict": "pass",
+      "note": "Candidates: track, record/answer/advance/decide, refresh, untrack, report. Calls: call and closeCall only. By design a call cannot be edited, reopened or deleted, and a recorded adoption cannot be withdrawn (decide refuses; untrack is the only way out and drops the record from the latest version). Both limits are now in the README. A person may want a reopen or withdraw method later."
+    },
+    {
+      "id": "preflight-checks",
+      "verdict": "pass",
+      "note": "track calls whoami and checks the collective before writing. answer needs a tracked extension and an open call; closeCall needs an existing open call and a reason; decide and advance check outcome, stage and evidence first. All verified to write nothing on refusal."
+    },
+    {
+      "id": "instance-names",
+      "verdict": "pass",
+      "note": "Mechanical checks: every method writes the single 'candidates' instance as {candidates, calls}, matching CandidatesSchema. The 28 candidate fields and 6 call fields in the schema match what newCandidate and openCall produce, and each conditional field has a path that sets it (callId: answer; outcome and decisions: decide; baselinePulls: advance to 5; facts and readings: refresh; closedAt and closeNote: closeCall). cycle is always 1 for new records and is kept only for old data. No pagination, so no truncation flag applies."
+    },
+    {
+      "id": "data-access",
+      "verdict": "pass",
+      "note": "Methods read their own state with readResource('candidates'). The workflow uses no data.latest reads. contracts.ts maps harvester to candidates; contracts-check reports '1 workflows OK' and guardrails-check passes."
+    },
+    {
+      "id": "version-upgrades",
+      "verdict": "pass",
+      "note": "manifest.yaml and model.version are both 2026.11.12.1; the registry's latest is 2026.11.06.4 and the dry run confirms 2026.11.12.1 is not published. The upgrades chain ends with an entry for 2026.11.12.1. There are no global arguments to migrate; stored data from older versions loads through schema defaults (no calls, outcome active, no inferred adoption), tested and probed with a pre-2026.11.12.1 record."
+    }
+  ]
+}

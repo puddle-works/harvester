@@ -8,6 +8,7 @@ import { createModelTestContext } from "jsr:@swamp-club/swamp-testing@0.20261030
 import { model, type RegistryPort } from "./harvester.ts";
 import {
   addReading,
+  type Candidate,
   newCandidate,
   type RegistryFacts,
 } from "./_lib/harvest.ts";
@@ -212,7 +213,190 @@ Deno.test("advance refuses and names the blockers", async () => {
         context,
       ),
     Error,
-    "Take at least two readings",
+    "flowEvidence",
+  );
+});
+
+Deno.test("decide persists a decline and prevents advancement until resumed", async () => {
+  const original = {
+    ...newCandidate("@acme/tool"),
+    discoveryNotes: "Payments demo",
+    flowEvidence: "Two days of setup saved",
+  };
+  const first = createModelTestContext({
+    storedResources: { candidates: { candidates: { "@acme/tool": original } } },
+  });
+  await model.methods.decide.execute({
+    extension: "@acme/tool",
+    outcome: "declined",
+    note: "No platform capacity",
+  }, first.context);
+  const saved = first.getWrittenResources()[0].data as unknown as {
+    candidates: Record<string, Candidate>;
+  };
+  assertEquals(saved.candidates["@acme/tool"].outcome, "declined");
+  assertEquals(
+    saved.candidates["@acme/tool"].flowEvidence,
+    original.flowEvidence,
+  );
+  const second = createModelTestContext({
+    storedResources: { candidates: saved },
+  });
+  await assertRejects(
+    () =>
+      model.methods.advance.execute({
+        extension: "@acme/tool",
+        to: 2,
+        note: "go",
+      }, second.context),
+    Error,
+    "declined",
+  );
+  await model.methods.decide.execute({
+    extension: "@acme/tool",
+    outcome: "active",
+    note: "Capacity available",
+  }, second.context);
+  const resumed = second.getWrittenResources()[0].data as unknown as {
+    candidates: Record<string, Candidate>;
+  };
+  assertEquals(
+    resumed.candidates["@acme/tool"].decisions.map((d) => d.outcome),
+    ["declined", "active"],
+  );
+});
+
+Deno.test("old stage 6 data retains its evidence without inferring adoption", async () => {
+  const legacy = {
+    extension: "@acme/tool",
+    stage: 6,
+    cycle: 2,
+    trackedAt: "2026-11-06T09:00:00.000Z",
+    stageEnteredAt: "2026-11-09T09:00:00.000Z",
+    steward: "platform-team",
+    requestRef: "Lab request",
+    valueStatement: "Shared onboarding",
+    showcases: [{ where: "Community demo", at: "2026-11-07T09:00:00.000Z" }],
+    negotiationNotes: "Discussed support",
+    decision: "Not accepted yet",
+    credit: "Payments team",
+    baselinePulls: 40,
+    readings: [],
+    history: [],
+    facts: { ...facts, labels: ["harvest-core"] },
+  };
+  const first = createModelTestContext({
+    storedResources: { candidates: { candidates: { "@acme/tool": legacy } } },
+  });
+  await model.methods.report.execute({}, first.context);
+  assert(first.getWrittenFiles()[0].text?.includes("Legacy stage 6"));
+  await assertRejects(
+    () =>
+      model.methods.decide.execute({
+        extension: "@acme/tool",
+        outcome: "adopted",
+        note: "Review",
+      }, first.context),
+    Error,
+    "adoptionAgreement",
+  );
+  await model.methods.record.execute({
+    extension: "@acme/tool",
+    reuseNotes: "Review scheduled",
+  }, first.context);
+  const saved = first.getWrittenResources()[0].data as unknown as {
+    candidates: Record<string, Candidate>;
+  };
+  const c = saved.candidates["@acme/tool"];
+  assertEquals(c.outcome, "active");
+  assertEquals(c.decisions, []);
+  for (const key of Object.keys(legacy) as (keyof typeof legacy)[]) {
+    assertEquals(c[key], legacy[key]);
+  }
+  const second = createModelTestContext({
+    storedResources: {
+      candidates: {
+        candidates: {
+          "@acme/tool": {
+            ...c,
+            platform: "developer platform",
+            collaborationAgreement: "Both teams agreed to trial",
+            collaborationNotes: "Trial worked",
+            adoptionAgreement: "Both teams approved support responsibilities",
+            offeringRef: "https://example.com/tool/docs",
+          },
+        },
+      },
+    },
+  });
+  await model.methods.decide.execute({
+    extension: "@acme/tool",
+    outcome: "adopted",
+    note: "Agreement reviewed",
+  }, second.context);
+  const adopted = (second.getWrittenResources()[0].data as unknown as {
+    candidates: Record<string, Candidate>;
+  }).candidates["@acme/tool"];
+  assertEquals(adopted.outcome, "adopted");
+  assertEquals(adopted.stageEnteredAt, legacy.stageEnteredAt);
+  assertEquals(adopted.credit, legacy.credit);
+  assertEquals(adopted.cycle, 2);
+});
+
+Deno.test("a call is stored, answered, reported and closed", async () => {
+  const first = createModelTestContext({
+    storedResources: {
+      // Data from before calls existed has no calls key.
+      candidates: {
+        candidates: { "@acme/tool": newCandidate("@acme/tool", 0) },
+      },
+    },
+  });
+  await model.methods.call.execute({
+    id: "fast-onboarding",
+    need: "Onboard a new team in a day",
+    platform: "Developer platform",
+  }, first.context);
+  type Saved = {
+    candidates: Record<string, Candidate>;
+    calls: Record<string, { closedAt: string | null }>;
+  };
+  let saved = first.getWrittenResources()[0].data as unknown as Saved;
+  assert("@acme/tool" in saved.candidates);
+  const second = createModelTestContext({
+    storedResources: { candidates: saved },
+  });
+  await model.methods.answer.execute(
+    { extension: "@acme/tool", call: "fast-onboarding" },
+    second.context,
+  );
+  saved = second.getWrittenResources()[0].data as unknown as Saved;
+  assertEquals(saved.candidates["@acme/tool"].callId, "fast-onboarding");
+  const third = createModelTestContext({
+    storedResources: { candidates: saved },
+  });
+  await model.methods.advance.execute(
+    { extension: "@acme/tool", to: 1, note: "answers the call" },
+    third.context,
+  );
+  await model.methods.report.execute({}, third.context);
+  const md = third.getWrittenFiles()[0].text ?? "";
+  assert(md.includes("Answered by @acme/tool"));
+  await model.methods.closeCall.execute(
+    { id: "fast-onboarding", note: "Met" },
+    third.context,
+  );
+  const closed = third.getWrittenResources().at(-1)!.data as unknown as Saved;
+  assert(closed.calls["fast-onboarding"].closedAt);
+  assertEquals(closed.candidates["@acme/tool"].stage, 1);
+  await assertRejects(
+    () =>
+      model.methods.closeCall.execute(
+        { id: "missing", note: "x" },
+        third.context,
+      ),
+    Error,
+    "No call",
   );
 });
 
