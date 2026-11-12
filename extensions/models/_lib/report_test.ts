@@ -6,7 +6,10 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
 import {
   addReading,
+  answerCall,
+  closeCall,
   decide,
+  newCall,
   newCandidate,
   record,
   type RegistryFacts,
@@ -121,5 +124,56 @@ Deno.test("reports distinguish closed outcomes and legacy adoption from missing 
     assert(report.includes("current owner retains care"));
     assert(report.includes("Legacy stage 6"));
     assert(report.includes("Reuse review:"));
+  }
+});
+
+Deno.test("reports list calls, who answers them and which still need a candidate", () => {
+  const answered = newCall(
+    "onboarding",
+    "Quicker | safer onboarding",
+    "dev",
+    null,
+    T0,
+  );
+  const open = newCall("audit", "Audit <trail>", "data platform", "Lab 7", T1);
+  const closed = closeCall(
+    newCall("search", "Search", "dev", null, T0),
+    "No longer needed",
+    T1,
+  );
+  const a = answerCall(newCandidate("@payments/tool", 1, T0), answered);
+  const b = answerCall(newCandidate("@search/kit", 1, T0), answered);
+  const calls = [closed, open, answered];
+
+  const md = renderReport([a, b], T1, calls);
+  const rows = md.split("\n").filter((l) =>
+    /^\| (onboarding|audit|search) /.test(l)
+  );
+  assertEquals(rows, [
+    "| onboarding | dev | Quicker \\| safer onboarding | – | open | @payments/tool (stage 1, active), @search/kit (stage 1, active) |",
+    "| audit | data platform | Audit <trail> | Lab 7 | open | no candidate yet: look for one |",
+    "| search | dev | Search | – | closed: No longer needed | – |",
+  ]);
+  assert(md.includes("Answers call: onboarding."));
+
+  const html = renderReportHtml([a, b], T1, calls);
+  assert(html.includes("Audit &lt;trail&gt;") && !html.includes("<trail>"));
+  assert(html.includes('<span class="badge waiting">Unanswered</span>'));
+  assert(
+    html.includes("Answered by: @payments/tool (stage 1, active), @search/kit"),
+  );
+  assert(html.includes("Closed: No longer needed"));
+});
+
+Deno.test("calls are reported even when no extension is tracked", () => {
+  const call = newCall("audit", "Audit trail", "data platform", null, T0);
+  for (
+    const report of [
+      renderReport([], T0, [call]),
+      renderReportHtml([], T0, [call]),
+    ]
+  ) {
+    assert(report.includes("Audit trail"));
+    assert(report.includes("No extensions are tracked"));
   }
 });

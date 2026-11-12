@@ -1,10 +1,64 @@
 /**
- * The weekly report: one table row per tracked extension, then what blocks
- * each from moving on. Pure, so it is tested without swamp.
+ * The weekly report: the calls for capabilities and who answers them, then
+ * one table row per tracked extension and what blocks each from moving on.
+ * Pure, so it is tested without swamp.
  *
  * @module
  */
-import { blockers, type Candidate, flags, STAGE_NAMES } from "./harvest.ts";
+import {
+  blockers,
+  type Call,
+  type Candidate,
+  flags,
+  STAGE_NAMES,
+} from "./harvest.ts";
+
+/** Open calls first, each oldest first. */
+function inOrder(calls: Call[]): Call[] {
+  return [...calls].sort((a, b) =>
+    Number(a.closedAt !== null) - Number(b.closedAt !== null) ||
+    a.openedAt.localeCompare(b.openedAt)
+  );
+}
+
+function answering(call: Call, candidates: Candidate[]): string[] {
+  return candidates.filter((c) => c.callId === call.id).map((c) =>
+    `${c.extension} (stage ${c.stage}, ${c.outcome})`
+  );
+}
+
+/** Text for one markdown table cell. */
+function cell(text: string): string {
+  return text.replace(/\s+/g, " ").replace(/\|/g, "\\|");
+}
+
+function callLines(calls: Call[], candidates: Candidate[]): string[] {
+  if (calls.length === 0) return [];
+  const out = [
+    "## Calls for capabilities",
+    "",
+    "| Call | Platform | Need | Posted | Status | Answered by |",
+    "| --- | --- | --- | --- | --- | --- |",
+  ];
+  for (const call of inOrder(calls)) {
+    const by = answering(call, candidates);
+    out.push(
+      `| ${call.id} | ${cell(call.platform)} | ${cell(call.need)} | ${
+        call.ref ? cell(call.ref) : "–"
+      } | ${
+        call.closedAt ? `closed: ${cell(call.closeNote ?? "")}` : "open"
+      } | ${
+        by.length > 0
+          ? by.join(", ")
+          : call.closedAt
+          ? "–"
+          : "no candidate yet: look for one"
+      } |`,
+    );
+  }
+  out.push("");
+  return out;
+}
 
 function change(c: Candidate): string {
   const r = c.readings;
@@ -59,8 +113,13 @@ function progress(c: Candidate) {
 }
 
 /** Render the report as markdown. */
-export function renderReport(candidates: Candidate[], now: string): string {
+export function renderReport(
+  candidates: Candidate[],
+  now: string,
+  calls: Call[] = [],
+): string {
   const out = [`# Harvester report`, ``, `Taken ${now}.`, ``];
+  out.push(...callLines(calls, candidates));
   if (candidates.length === 0) {
     out.push("No extensions are tracked.");
     return out.join("\n") + "\n";
@@ -85,7 +144,7 @@ export function renderReport(candidates: Candidate[], now: string): string {
       ``,
       `Platform: ${c.platform ?? "none named"}. Steward: ${
         c.steward ?? "none named"
-      }.`,
+      }.${c.callId ? ` Answers call: ${c.callId}.` : ""}`,
       ``,
       state.message,
     );
@@ -143,7 +202,30 @@ const MARK =
   `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="7" r="3" fill="currentColor"/><ellipse cx="16" cy="19" rx="5" ry="2.25" fill="currentColor"/><ellipse cx="16" cy="19" rx="9" ry="4.5" stroke="currentColor" stroke-width="1.5" opacity=".55"/><ellipse cx="16" cy="19" rx="14" ry="7" stroke="currentColor" stroke-width="1" opacity=".25"/></svg>`;
 
 /** Render the report as one self-contained HTML page: a stage track per extension. */
-export function renderReportHtml(candidates: Candidate[], now: string): string {
+export function renderReportHtml(
+  candidates: Candidate[],
+  now: string,
+  calls: Call[] = [],
+): string {
+  const callCards = inOrder(calls).map((call) => {
+    const by = answering(call, candidates);
+    const unanswered = by.length === 0 && !call.closedAt;
+    return `<div class="card"><div class="top"><span class="name">${
+      escapeHtml(call.need)
+    }</span><span class="meta">${escapeHtml(call.id)} · ${
+      escapeHtml(call.platform)
+    }</span><span class="badge ${unanswered ? "waiting" : "settled"}">${
+      call.closedAt ? "Closed" : unanswered ? "Unanswered" : "Open"
+    }</span></div><div class="state">${
+      by.length > 0
+        ? `Answered by: ${escapeHtml(by.join(", "))}.`
+        : call.closedAt
+        ? "No candidate answered."
+        : "No candidate answers this call yet: look for one."
+    }${call.ref ? ` Posted: ${escapeHtml(call.ref)}.` : ""}${
+      call.closedAt ? ` Closed: ${escapeHtml(call.closeNote ?? "")}` : ""
+    }</div></div>`;
+  }).join("");
   const states = candidates.map(progress);
   const ready = states.filter((s) => s.ready).length;
   const waiting = states.filter((s) => s.label === "Waiting").length;
@@ -174,7 +256,9 @@ export function renderReportHtml(candidates: Candidate[], now: string): string {
       `<div class="track">${track}</div>` +
       `<div class="state">${state.message} Platform: ${
         escapeHtml(c.platform ?? "none named")
-      }. Steward: ${escapeHtml(c.steward ?? "none named")}.</div>${
+      }. Steward: ${escapeHtml(c.steward ?? "none named")}.${
+        c.callId ? ` Answers call: ${escapeHtml(c.callId)}.` : ""
+      }</div>${
         c.decision
           ? `<div class="state">Decision notes: ${escapeHtml(c.decision)}</div>`
           : ""
@@ -195,6 +279,7 @@ export function renderReportHtml(candidates: Candidate[], now: string): string {
     `<header>${MARK}<span class="brand-name">puddle <span>works</span></span>` +
     `<span class="brand-app">Harvester</span></header><main>` +
     `<h1>${title}</h1><p class="sub">Report taken ${escapeHtml(now)}.</p>` +
+    (callCards ? `<h2>Calls for capabilities</h2>${callCards}` : "") +
     `<h2>Tracked extensions</h2>${rows}` +
     `<p class="key">${
       STAGE_NAMES.map((n, i) => `${i} ${n}`).join(" · ")

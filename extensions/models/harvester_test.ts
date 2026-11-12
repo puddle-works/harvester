@@ -8,7 +8,9 @@ import { createModelTestContext } from "jsr:@swamp-club/swamp-testing@0.20261030
 import { model, type RegistryPort } from "./harvester.ts";
 import {
   addReading,
+  type Call,
   type Candidate,
+  newCall,
   newCandidate,
   type RegistryFacts,
 } from "./_lib/harvest.ts";
@@ -35,28 +37,127 @@ Deno.test("the model type is @puddleworks/harvester", () => {
   assertEquals(model.type, "@puddleworks/harvester");
 });
 
-Deno.test("track stores a candidate for an extension in your collective", async () => {
+type Stored = {
+  candidates: Record<string, Candidate>;
+  calls: Record<string, Call>;
+};
+
+/** What the last method call wrote. */
+function written(getWrittenResources: () => { data: unknown }[]): Stored {
+  return getWrittenResources().at(-1)!.data as Stored;
+}
+
+Deno.test("track stores a candidate from any collective, as a platform harvests from outside", async () => {
   const { context, getWrittenResources } = createModelTestContext();
   await model.methods.track.execute(
-    { extension: "@acme/tool", stage: 1, _registry: registry() },
+    { extension: "@other/tool", stage: 1 },
     context,
   );
-  const w = getWrittenResources()[0] as unknown as Written;
-  assert("@acme/tool" in w.data.candidates);
+  const stored = written(getWrittenResources);
+  assertEquals(Object.keys(stored.candidates), ["@other/tool"]);
+  assertEquals(stored.candidates["@other/tool"].stage, 1);
+  assertEquals(stored.calls, {});
 });
 
-Deno.test("track refuses an extension outside your collectives", async () => {
-  const { context, getWrittenResources } = createModelTestContext();
+Deno.test("a call exists before any candidate, and candidates from several collectives answer it", async () => {
+  const first = createModelTestContext();
+  await model.methods.openCall.execute({
+    id: "onboarding",
+    need: "Quicker onboarding",
+    platform: "developer platform",
+    ref: "https://swamp-club.com/lab/1",
+  }, first.context);
+  const opened = written(first.getWrittenResources);
+  assertEquals(opened.candidates, {});
+  assertEquals(opened.calls.onboarding.ref, "https://swamp-club.com/lab/1");
+
+  const second = createModelTestContext({
+    storedResources: { candidates: opened },
+  });
   await assertRejects(
     () =>
-      model.methods.track.execute(
-        { extension: "@other/tool", stage: 1, _registry: registry() },
-        context,
-      ),
+      model.methods.openCall.execute({
+        id: "onboarding",
+        need: "Again",
+        platform: "p",
+      }, second.context),
     Error,
-    "@other",
+    "already a call",
   );
-  assertEquals(getWrittenResources().length, 0);
+  await model.methods.track.execute(
+    { extension: "@payments/tool", stage: 1, call: "onboarding" },
+    second.context,
+  );
+  const third = createModelTestContext({
+    storedResources: {
+      candidates: {
+        ...written(second.getWrittenResources),
+        candidates: {
+          ...written(second.getWrittenResources).candidates,
+          "@search/kit": newCandidate("@search/kit"),
+        },
+      },
+    },
+  });
+  await model.methods.answerCall.execute(
+    { extension: "@search/kit", call: "onboarding" },
+    third.context,
+  );
+  const answered = written(third.getWrittenResources);
+  assertEquals(
+    Object.values(answered.candidates).map((c) => [c.extension, c.callId]),
+    [["@payments/tool", "onboarding"], ["@search/kit", "onboarding"]],
+  );
+
+  const fourth = createModelTestContext({
+    storedResources: { candidates: answered },
+  });
+  await model.methods.closeCall.execute(
+    { id: "onboarding", note: "Two candidates in negotiation" },
+    fourth.context,
+  );
+  const closed = written(fourth.getWrittenResources);
+  assert(closed.calls.onboarding.closedAt);
+  assertEquals(Object.keys(closed.candidates).length, 2);
+});
+
+Deno.test("a call that does not exist cannot be answered, and nothing is tracked", async () => {
+  const { context, getWrittenResources } = createModelTestContext({
+    storedResources: {
+      candidates: {
+        candidates: {},
+        calls: { onboarding: newCall("onboarding", "x", "p") },
+      },
+    },
+  });
+  for (const call of ["missing", "constructor"]) {
+    await assertRejects(
+      () =>
+        model.methods.track.execute(
+          { extension: "@acme/tool", stage: 1, call },
+          context,
+        ),
+      Error,
+      `no call '${call}'`,
+    );
+  }
+  assertEquals(getWrittenResources(), []);
+});
+
+Deno.test("records stored before calls existed load with no calls and keep their candidates", async () => {
+  const { context, getWrittenResources } = createModelTestContext({
+    storedResources: {
+      candidates: { candidates: { "@acme/tool": newCandidate("@acme/tool") } },
+    },
+  });
+  await model.methods.record.execute(
+    { extension: "@acme/tool", steward: "platform-team" },
+    context,
+  );
+  const stored = written(getWrittenResources);
+  assertEquals(stored.calls, {});
+  assertEquals(stored.candidates["@acme/tool"].callId, null);
+  assertEquals(stored.candidates["@acme/tool"].steward, "platform-team");
 });
 
 Deno.test("track refuses a duplicate", async () => {
@@ -68,7 +169,7 @@ Deno.test("track refuses a duplicate", async () => {
   await assertRejects(
     () =>
       model.methods.track.execute(
-        { extension: "@acme/tool", stage: 1, _registry: registry() },
+        { extension: "@acme/tool", stage: 1 },
         context,
       ),
     Error,

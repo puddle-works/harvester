@@ -3,6 +3,9 @@
  * needs before an extension may move on, and which registry facts those rules
  * read. Pure functions only, so the rules are testable without swamp.
  *
+ * Stage 0 belongs to a call for capabilities, which a platform opens before
+ * any candidate exists; candidates answer it or are found without one.
+ *
  * Node 6 has no legend in the diagram. Here it records an agreed adoption
  * and a usable shared offering. This is a local interpretation, not Skelton's
  * stage definition. New discovery does not reset an adopted capability.
@@ -59,6 +62,22 @@ export interface Move {
   note: string;
 }
 
+/**
+ * A call for a capability: stage 0 of the diagram. A platform opens it before
+ * any candidate exists, and any number of candidates may answer it.
+ */
+export interface Call {
+  id: string;
+  need: string;
+  /** The platform asking. */
+  platform: string;
+  /** Where the call is posted, such as a Lab request. */
+  ref: string | null;
+  openedAt: string;
+  closedAt: string | null;
+  closeNote: string | null;
+}
+
 /** Everything tracked about one extension. */
 export interface Candidate {
   extension: string;
@@ -71,6 +90,9 @@ export interface Candidate {
   stageEnteredAt: string;
   steward: string | null;
   platform: string | null;
+  /** The call this candidate answers, if it answers one. */
+  callId: string | null;
+  /** A call kept outside Harvester, for records that predate calls. */
   requestRef: string | null;
   discoveryNotes: string | null;
   flowEvidence: string | null;
@@ -129,19 +151,56 @@ export function collectiveOf(extension: string): string {
   return match[1].toLowerCase();
 }
 
-/** Refuse an extension outside the runner's own collectives. */
-export function assertOwnCollective(
-  extension: string,
-  collectives: string[],
-): void {
-  const collective = collectiveOf(extension);
-  if (!collectives.map((c) => c.toLowerCase()).includes(collective)) {
+const CALL_ID = /^[a-z0-9][a-z0-9-]*$/;
+
+/** Open a call for a capability a platform needs. */
+export function newCall(
+  id: string,
+  need: string,
+  platform: string,
+  ref: string | null = null,
+  now: string = new Date().toISOString(),
+): Call {
+  if (!CALL_ID.test(id)) {
     throw new Error(
-      `@${collective} is not one of your collectives (${
-        collectives.map((c) => `@${c}`).join(", ") || "none"
-      }), so ${extension} cannot be tracked.`,
+      `'${id}' is not a call id: use lower-case letters, digits and hyphens.`,
     );
   }
+  if (!need.trim()) throw new Error("A call must say what is needed (need).");
+  if (!platform.trim()) {
+    throw new Error("A call must name the platform asking (platform).");
+  }
+  return {
+    id,
+    need: need.trim(),
+    platform: platform.trim(),
+    ref: ref?.trim() || null,
+    openedAt: now,
+    closedAt: null,
+    closeNote: null,
+  };
+}
+
+/** Close a call, saying why: answered, withdrawn or no longer needed. */
+export function closeCall(
+  call: Call,
+  note: string,
+  now: string = new Date().toISOString(),
+): Call {
+  if (call.closedAt) throw new Error(`Call '${call.id}' is already closed.`);
+  if (!note.trim()) throw new Error("Closing a call needs a reason.");
+  return { ...call, closedAt: now, closeNote: note.trim() };
+}
+
+/** Link a candidate to the open call it answers. */
+export function answerCall(candidate: Candidate, call: Call): Candidate {
+  if (call.closedAt) throw new Error(`Call '${call.id}' is closed.`);
+  if (candidate.callId && candidate.callId !== call.id) {
+    throw new Error(
+      `${candidate.extension} already answers call '${candidate.callId}'.`,
+    );
+  }
+  return { ...candidate, callId: call.id };
 }
 
 /** Start tracking an extension at stage 0 or 1. */
@@ -164,6 +223,7 @@ export function newCandidate(
     stageEnteredAt: now,
     steward: null,
     platform: null,
+    callId: null,
     requestRef: null,
     discoveryNotes: null,
     flowEvidence: null,
@@ -298,9 +358,9 @@ export function blockers(candidate: Candidate, to: Stage): string[] {
   if (to !== c.stage + 1) return ["Move only to the next stage."];
   switch (c.stage) {
     case 0:
-      if (!c.requestRef) {
+      if (!c.callId && !c.requestRef) {
         out.push(
-          "Link the call for capabilities and intended users (requestRef).",
+          "Answer a call for capabilities (answerCall), or link one kept elsewhere (requestRef).",
         );
       }
       break;

@@ -3,11 +3,13 @@
  * Matthew Skelton's harvesting diagram (Team Topologies, Conflux 2024).
  *
  * It records and reports; a person decides. It never deprecates, transfers or
- * contacts anyone. Only extensions in the runner's own collectives can be
- * tracked, and only `username` and `collectives` are read from the account.
+ * contacts anyone. A platform may track a capability from any collective, as
+ * Skelton's platform harvests from outside itself. Only `username` and
+ * `collectives` are read from the account.
  *
- * Output: a `candidates` resource holding every tracked extension, and the
- * weekly `report` as a markdown file and as an HTML page.
+ * Output: a `candidates` resource holding every call for capabilities and
+ * every tracked extension, and the weekly `report` as a markdown file and as
+ * an HTML page.
  *
  * @module
  */
@@ -15,9 +17,12 @@ import { z } from "npm:zod@4";
 import {
   addReading,
   advance,
-  assertOwnCollective,
+  answerCall,
+  type Call,
   type Candidate,
+  closeCall,
   decide,
+  newCall,
   newCandidate,
   type Outcome,
   parseInfo,
@@ -50,6 +55,7 @@ const CandidateSchema = z.object({
   stageEnteredAt: z.string(),
   steward: z.string().nullable(),
   platform: z.string().nullable().default(null),
+  callId: z.string().nullable().default(null),
   requestRef: z.string().nullable(),
   discoveryNotes: z.string().nullable().default(null),
   flowEvidence: z.string().nullable().default(null),
@@ -86,9 +92,21 @@ const CandidateSchema = z.object({
   }).nullable(),
 });
 
-/** What is stored: every tracked extension by name. */
+const CallSchema = z.object({
+  id: z.string(),
+  need: z.string(),
+  platform: z.string(),
+  ref: z.string().nullable(),
+  openedAt: z.string(),
+  closedAt: z.string().nullable(),
+  closeNote: z.string().nullable(),
+});
+
+/** What is stored: every tracked extension by name, and every call by id. */
 export const CandidatesSchema = z.object({
   candidates: z.record(z.string(), CandidateSchema),
+  // Records written before calls existed have none.
+  calls: z.record(z.string(), CallSchema).default({}),
 });
 
 /** How the model reads the registry. Tests pass a stub. */
@@ -135,26 +153,37 @@ interface Ctx {
   };
 }
 
-type Store = Record<string, Candidate>;
+interface Store {
+  candidates: Record<string, Candidate>;
+  calls: Record<string, Call>;
+}
 
 async function load(context: Ctx): Promise<Store> {
   const stored = await context.readResource?.("candidates");
-  return CandidatesSchema.parse(stored ?? { candidates: {} })
-    .candidates as Store;
+  return CandidatesSchema.parse(stored ?? { candidates: {} }) as Store;
 }
 
 async function save(context: Ctx, store: Store) {
   const handle = await context.writeResource("candidates", "candidates", {
-    candidates: store,
+    candidates: store.candidates,
+    calls: store.calls,
   });
   return { dataHandles: [handle] };
 }
 
 function tracked(store: Store, extension: string): Candidate {
   // Own keys only: "constructor" or "toString" would match any object.
-  const c = Object.hasOwn(store, extension) ? store[extension] : undefined;
+  const c = Object.hasOwn(store.candidates, extension)
+    ? store.candidates[extension]
+    : undefined;
   if (!c) throw new Error(`${extension} is not tracked. Run 'track' first.`);
   return c;
+}
+
+function called(store: Store, id: string): Call {
+  const call = Object.hasOwn(store.calls, id) ? store.calls[id] : undefined;
+  if (!call) throw new Error(`There is no call '${id}'. Run 'openCall' first.`);
+  return call;
 }
 
 const Registry = z.any().optional().describe("Test hook: a registry stub.");
@@ -183,13 +212,14 @@ export const model = {
     {
       toVersion: "2026.11.12.1",
       description:
-        "Adds negotiated adoption evidence and outcomes. Existing resource evidence is preserved; missing fields default on read without inferring adoption.",
+        "Adds calls for capabilities, tracking from any collective, and negotiated adoption evidence and outcomes. Existing resource evidence is preserved; missing fields default on read without inferring adoption.",
       upgradeAttributes: (old: Record<string, unknown>) => old,
     },
   ],
   resources: {
     candidates: {
-      description: "Every tracked extension, its stage, evidence and readings.",
+      description:
+        "Every call for capabilities, and every tracked extension with its stage, evidence and readings.",
       schema: CandidatesSchema,
       lifetime: "infinite" as const,
       // History lives inside the document, but keep many versions anyway.
@@ -211,29 +241,81 @@ export const model = {
     },
   },
   methods: {
+    openCall: {
+      description:
+        "Open a call for a capability a platform needs (stage 0). No candidate is needed yet, and several may answer.",
+      arguments: z.object({
+        id: z.string().describe("A short id, such as faster-onboarding."),
+        need: z.string().describe("The capability needed and for whom."),
+        platform: z.string().describe("The platform asking."),
+        ref: z.string().optional().describe(
+          "Where the call is posted, such as a Lab request.",
+        ),
+      }),
+      execute: async (
+        args: { id: string; need: string; platform: string; ref?: string },
+        context: Ctx,
+      ) => {
+        const store = await load(context);
+        if (Object.hasOwn(store.calls, args.id)) {
+          throw new Error(`There is already a call '${args.id}'.`);
+        }
+        store.calls[args.id] = newCall(
+          args.id,
+          args.need,
+          args.platform,
+          args.ref ?? null,
+        );
+        context.logger.info("Opened call {id}", { id: args.id });
+        return save(context, store);
+      },
+    },
+    answerCall: {
+      description: "Link a tracked extension to the open call it answers.",
+      arguments: z.object({ extension: z.string(), call: z.string() }),
+      execute: async (
+        args: { extension: string; call: string },
+        context: Ctx,
+      ) => {
+        const store = await load(context);
+        store.candidates[args.extension] = answerCall(
+          tracked(store, args.extension),
+          called(store, args.call),
+        );
+        return save(context, store);
+      },
+    },
+    closeCall: {
+      description:
+        "Close a call with a reason: answered, withdrawn or no longer needed. Its candidates stay tracked.",
+      arguments: z.object({ id: z.string(), note: z.string().trim().min(1) }),
+      execute: async (args: { id: string; note: string }, context: Ctx) => {
+        const store = await load(context);
+        store.calls[args.id] = closeCall(called(store, args.id), args.note);
+        context.logger.info("Closed call {id}", { id: args.id });
+        return save(context, store);
+      },
+    },
     track: {
       description:
-        "Start tracking an extension in one of your collectives (stage 0 or 1).",
+        "Start tracking an extension from any collective as a candidate (stage 1, or 0 for older records). Pass call to answer an open call.",
       arguments: z.object({
         extension: z.string().describe("@collective/name"),
         stage: z.number().int().min(0).max(1).default(1),
-        _registry: Registry,
+        call: z.string().optional().describe("The id of the call it answers."),
       }),
       execute: async (
-        args: { extension: string; stage: number; _registry?: RegistryPort },
+        args: { extension: string; stage: number; call?: string },
         context: Ctx,
       ) => {
-        const reg = args._registry ?? swampRegistry;
-        const who = await reg.whoami();
-        assertOwnCollective(args.extension, who.collectives);
         const store = await load(context);
-        if (store[args.extension]) {
+        if (Object.hasOwn(store.candidates, args.extension)) {
           throw new Error(`${args.extension} is already tracked.`);
         }
-        store[args.extension] = newCandidate(
-          args.extension,
-          args.stage as Stage,
-        );
+        const candidate = newCandidate(args.extension, args.stage as Stage);
+        store.candidates[args.extension] = args.call === undefined
+          ? candidate
+          : answerCall(candidate, called(store, args.call));
         context.logger.info("Tracking {e}", { e: args.extension });
         return save(context, store);
       },
@@ -287,7 +369,10 @@ export const model = {
       ) => {
         const { extension, ...evidence } = args;
         const store = await load(context);
-        store[extension] = record(tracked(store, extension), evidence);
+        store.candidates[extension] = record(
+          tracked(store, extension),
+          evidence,
+        );
         return save(context, store);
       },
     },
@@ -304,7 +389,7 @@ export const model = {
         context: Ctx,
       ) => {
         const store = await load(context);
-        store[args.extension] = decide(
+        store.candidates[args.extension] = decide(
           tracked(store, args.extension),
           args.outcome,
           args.note,
@@ -319,7 +404,7 @@ export const model = {
       execute: async (args: { extension: string }, context: Ctx) => {
         const store = await load(context);
         tracked(store, args.extension);
-        delete store[args.extension];
+        delete store.candidates[args.extension];
         context.logger.info("Untracked {e}", { e: args.extension });
         return save(context, store);
       },
@@ -334,12 +419,16 @@ export const model = {
       ) => {
         const reg = args._registry ?? swampRegistry;
         const store = await load(context);
+        const candidates = store.candidates;
         const now = new Date().toISOString();
-        for (const name of Object.keys(store)) {
+        for (const name of Object.keys(candidates)) {
           // A rerun on the same day must not add a second reading.
-          if (readToday(store[name], now)) continue;
+          if (readToday(candidates[name], now)) continue;
           try {
-            store[name] = addReading(store[name], await reg.info(name));
+            candidates[name] = addReading(
+              candidates[name],
+              await reg.info(name),
+            );
           } catch (error) {
             // One unreadable extension must not lose this week's other readings.
             context.logger.warn("Could not read {e}: {error}", {
@@ -364,7 +453,7 @@ export const model = {
         context: Ctx,
       ) => {
         const store = await load(context);
-        store[args.extension] = advance(
+        store.candidates[args.extension] = advance(
           tracked(store, args.extension),
           args.to as Stage,
           args.note,
@@ -378,12 +467,13 @@ export const model = {
       arguments: z.object({}),
       execute: async (_args: Record<string, never>, context: Ctx) => {
         const store = await load(context);
-        const candidates = Object.values(store);
+        const candidates = Object.values(store.candidates);
+        const calls = Object.values(store.calls);
         const now = new Date().toISOString();
         const md = await context.createFileWriter("report", "weekly")
-          .writeText(renderReport(candidates, now));
+          .writeText(renderReport(candidates, now, calls));
         const html = await context.createFileWriter("reportHtml", "weekly")
-          .writeText(renderReportHtml(candidates, now));
+          .writeText(renderReportHtml(candidates, now, calls));
         return { dataHandles: [md, html] };
       },
     },

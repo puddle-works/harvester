@@ -17,8 +17,8 @@ activities, not a checklist prescribed by Skelton.
 
 | Stage | Name | Evidence |
 | --- | --- | --- |
-| 0 | Call for capabilities | `requestRef`: link the capability need, calling platform and intended users. The Lab is one possible place to keep it. |
-| 1 | Candidate | `discoveryNotes`: source team, how it was found, follow-up owner/action. `flowEvidence`: a demonstrated improvement to flow or reduced effort. |
+| 0 | Call for capabilities | A call opened with `openCall`: the need, the platform asking and, with `ref`, where it is posted. It needs no candidate, and several candidates may answer it. |
+| 1 | Candidate | Found by answering a call or by looking without one. `discoveryNotes`: source team, how it was found, follow-up owner/action. `flowEvidence`: a demonstrated improvement to flow or reduced effort. |
 | 2 | Value proposition | `valueStatement`: wider value, beneficiaries, incentives to share, stewardship costs and how to assess benefit. |
 | 3 | Showcase | A `showcase` record and `interest` from prospective consumers or platforms, with their feedback. A steward need not be agreed yet. |
 | 4 | Negotiate stewardship | Named `platform` and `steward`, `negotiationNotes`, and `collaborationAgreement` recording both parties' agreement to scope and care responsibilities during a trial. |
@@ -32,6 +32,23 @@ not to erasing an adopted capability's agreement, attribution and history.
 
 These are evidence records, not electronic signatures. Harvester checks that
 the records exist; a person must verify their content and both parties' consent.
+
+## Calls and candidates
+
+A platform opens a call before any candidate exists: "has anyone got anything in
+this area?" (54:08). `openCall` records it, `track ... call=<id>` or `answerCall`
+links each candidate that answers, and `closeCall` closes it with a reason. The
+report lists every open call and marks the ones nobody answers yet.
+
+A candidate does not need a call. Skelton's cycle can start anywhere (51:49), so
+`track` starts a candidate at stage 1. Stage 0 on a candidate remains for older
+records: it moves on once the candidate answers a call or links one kept
+elsewhere with `requestRef`.
+
+A candidate may come from any collective. Skelton's platform harvests "a service
+from outside the platform" (56:03), so the platform that found a capability can
+track it without owning it. Tracking is a private note: Harvester tells nobody,
+and the source team decides nothing by being tracked.
 
 ## Decisions and optional use
 
@@ -69,14 +86,9 @@ remain supporting context; growth is never required to move on.
 
 ## Use
 
-Only extensions in your own collectives can be tracked (checked against
-`swamp auth whoami`). Only the username and collectives are read from your
-account; no email or name is stored.
-
-Harvester reads the registry by running `swamp auth whoami` and
-`swamp extension info` as subprocesses, so `swamp` must be on your `PATH`. Those
-are the only commands it runs, and extension names must match `@collective/name`
-before they are passed to one.
+Harvester reads the registry by running `swamp extension info` as a subprocess,
+so `swamp` must be on your `PATH`. Extension names must match `@collective/name`
+before they are passed to it. No email or name is stored.
 
 Pull the extension and create its model once:
 
@@ -85,15 +97,17 @@ swamp extension pull @puddleworks/harvester
 swamp model create @puddleworks/harvester harvester
 ```
 
-Then track extensions, record evidence and move them on:
+Then open calls, track extensions, record evidence and move them on:
 
 ```sh
-swamp model method run harvester track --input extension=@acme/tool
+swamp model method run harvester openCall --input id=onboarding --input need="Quicker onboarding for new services" --input platform="developer platform"
+swamp model method run harvester track --input extension=@acme/tool --input call=onboarding
 swamp model method run harvester record --input extension=@acme/tool --input steward=platform-team
 swamp model method run harvester advance --input extension=@acme/tool --input to=2 --input note="why"
 swamp model method run harvester decide --input extension=@acme/tool --input outcome=deferred --input note="No support capacity yet"
 swamp model method run harvester decide --input extension=@acme/tool --input outcome=active --input note="Capacity now available"
 swamp model method run harvester decide --input extension=@acme/tool --input outcome=adopted --input note="Both teams approved the supported offering"
+swamp model method run harvester closeCall --input id=onboarding --input note="Answered by @acme/tool"
 swamp model method run harvester untrack --input extension=@acme/tool   # older stored versions keep its history
 swamp workflow run @puddleworks/harvester-weekly   # weekly: refresh, then report
 ```
@@ -116,21 +130,22 @@ profile emails.
 
 ## Limits
 
-This remains a tracker for nominated extensions in your own collectives, not a
-registry-wide harvesting programme. Calls without an identified extension and
-external leads must currently stay in the Lab or another linked record.
-`discoveryNotes` connects nominations to conferences, communities and outreach;
-Harvester does not conduct those activities or automatically enrol search results.
-Those discovery and ownership boundaries are implementation limits, not rules
-from Skelton. No collective membership or publishing authority is changed.
+This is a tracker for calls and nominated extensions, not a registry-wide
+harvesting programme. A person finds each candidate and tracks it:
+`discoveryNotes` connects nominations to conferences, communities and outreach,
+but Harvester does not conduct those activities, search the registry or enrol
+search results. That boundary is an implementation limit, not a rule from
+Skelton. Harvester posts a call nowhere; `ref` links where a person posted it.
+No collective membership or publishing authority is changed.
 
 The registry keeps only a lifetime `pullCount`, so trends come from the weekly
 readings and cannot be backfilled. Every swamp command needs an account.
 
 ## Existing records
 
-New evidence fields default to empty on read; existing evidence, readings and
-history are preserved. Old free-text decisions and core labels are not converted
+New evidence fields default to empty on read, and records stored before calls
+existed load with no calls; existing evidence, readings and history are
+preserved. Old free-text decisions and core labels are not converted
 into adoption. Old stage-6 records show "Review adoption": review and record the
 agreement and offering evidence, then use `decide outcome=adopted`. Historical
 cycle numbers remain stored, but stage 6 no longer increments them or resets

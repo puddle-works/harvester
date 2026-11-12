@@ -8,12 +8,14 @@ import { assert, assertEquals, assertThrows } from "jsr:@std/assert@1";
 import {
   addReading,
   advance,
-  assertOwnCollective,
+  answerCall,
   blockers,
   type Candidate,
+  closeCall,
   CORE_LABEL,
   decide,
   flags,
+  newCall,
   newCandidate,
   parseInfo,
   parseWhoami,
@@ -259,12 +261,55 @@ Deno.test("parseWhoami keeps only the username and collectives", () => {
   assertEquals(who, { username: "ada", collectives: ["acme", "ada"] });
 });
 
-Deno.test("only extensions in the runner's own collectives may be tracked", () => {
-  assertOwnCollective("@acme/tool", ["acme"]);
+Deno.test("a call names a need and the platform asking, before any candidate", () => {
+  const call = newCall(
+    "faster-onboarding",
+    " Quicker onboarding for new services ",
+    "developer platform",
+    null,
+    T0,
+  );
+  assertEquals(call, {
+    id: "faster-onboarding",
+    need: "Quicker onboarding for new services",
+    platform: "developer platform",
+    ref: null,
+    openedAt: T0,
+    closedAt: null,
+    closeNote: null,
+  });
+  assertThrows(() => newCall("Faster Onboarding", "x", "p"), Error, "call id");
+  assertThrows(() => newCall("a", " ", "p"), Error, "need");
+  assertThrows(() => newCall("a", "x", " "), Error, "platform");
+});
+
+Deno.test("answering a call satisfies stage 0, and several candidates may answer", () => {
+  const call = newCall("onboarding", "Quicker onboarding", "platform", null);
+  const waiting = newCandidate("@payments/tool", 0, T0);
+  assertThrows(() => advance(waiting, 1, "go"), Error, "answerCall");
+  const first = answerCall(waiting, call);
+  const second = answerCall(newCandidate("@search/kit", 0, T0), call);
+  assertEquals([first.callId, second.callId], ["onboarding", "onboarding"]);
+  assertEquals(advance(first, 1, "answers the call").stage, 1);
+  assertEquals(answerCall(first, call), first);
   assertThrows(
-    () => assertOwnCollective("@other/tool", ["acme"]),
+    () => answerCall(first, newCall("other", "x", "p")),
     Error,
-    "@other",
+    "already answers call 'onboarding'",
+  );
+});
+
+Deno.test("a closed call takes no more answers and cannot be closed twice", () => {
+  const call = newCall("onboarding", "Quicker onboarding", "platform", null);
+  assertThrows(() => closeCall(call, " ", T1), Error, "reason");
+  const closed = closeCall(call, "Answered by @payments/tool", T1);
+  assertEquals(closed.closedAt, T1);
+  assertEquals(closed.closeNote, "Answered by @payments/tool");
+  assertThrows(() => closeCall(closed, "again"), Error, "already closed");
+  assertThrows(
+    () => answerCall(newCandidate("@a/b", 1, T0), closed),
+    Error,
+    "is closed",
   );
 });
 
