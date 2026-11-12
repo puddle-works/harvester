@@ -15,10 +15,14 @@ import { z } from "npm:zod@4";
 import {
   addReading,
   advance,
+  answerCall,
   assertOwnCollective,
   type Candidate,
+  type CapabilityCall,
+  closeCall,
   decide,
   newCandidate,
+  openCall,
   type Outcome,
   parseInfo,
   parseWhoami,
@@ -51,6 +55,7 @@ const CandidateSchema = z.object({
   steward: z.string().nullable(),
   platform: z.string().nullable().default(null),
   requestRef: z.string().nullable(),
+  callId: z.string().nullable().default(null),
   discoveryNotes: z.string().nullable().default(null),
   flowEvidence: z.string().nullable().default(null),
   valueStatement: z.string().nullable(),
@@ -86,9 +91,20 @@ const CandidateSchema = z.object({
   }).nullable(),
 });
 
-/** What is stored: every tracked extension by name. */
+const CallSchema = z.object({
+  id: z.string(),
+  need: z.string(),
+  platform: z.string(),
+  openedAt: z.string(),
+  closedAt: z.string().nullable(),
+  closeNote: z.string().nullable(),
+});
+
+/** What is stored: every tracked extension by name, and the open calls. */
 export const CandidatesSchema = z.object({
   candidates: z.record(z.string(), CandidateSchema),
+  // Older stored versions have no calls.
+  calls: z.record(z.string(), CallSchema).default({}),
 });
 
 /** How the model reads the registry. Tests pass a stub. */
@@ -136,16 +152,17 @@ interface Ctx {
 }
 
 type Store = Record<string, Candidate>;
+type State = { candidates: Store; calls: Record<string, CapabilityCall> };
 
-async function load(context: Ctx): Promise<Store> {
+async function load(context: Ctx): Promise<State> {
   const stored = await context.readResource?.("candidates");
-  return CandidatesSchema.parse(stored ?? { candidates: {} })
-    .candidates as Store;
+  return CandidatesSchema.parse(stored ?? { candidates: {} }) as State;
 }
 
-async function save(context: Ctx, store: Store) {
+async function save(context: Ctx, state: State) {
   const handle = await context.writeResource("candidates", "candidates", {
-    candidates: store,
+    candidates: state.candidates,
+    calls: state.calls,
   });
   return { dataHandles: [handle] };
 }
@@ -183,7 +200,7 @@ export const model = {
     {
       toVersion: "2026.11.12.1",
       description:
-        "Adds negotiated adoption evidence and outcomes. Existing resource evidence is preserved; missing fields default on read without inferring adoption.",
+        "Adds calls for capabilities, negotiated adoption evidence and outcomes. Existing resource evidence is preserved; missing fields default on read without inferring adoption.",
       upgradeAttributes: (old: Record<string, unknown>) => old,
     },
   ],
@@ -211,6 +228,64 @@ export const model = {
     },
   },
   methods: {
+    call: {
+      description:
+        "Post a call for a capability a platform needs (stage 0). No extension needs to exist yet; candidates answer it with 'answer'.",
+      arguments: z.object({
+        id: z.string().describe(
+          "Short lower-case id, such as fast-onboarding.",
+        ),
+        need: z.string().describe(
+          "The capability needed and who would use it.",
+        ),
+        platform: z.string().describe("The platform area posting the call."),
+      }),
+      execute: async (
+        args: { id: string; need: string; platform: string },
+        context: Ctx,
+      ) => {
+        const state = await load(context);
+        state.calls[args.id] = openCall(
+          state.calls,
+          args.id,
+          args.need,
+          args.platform,
+        );
+        return save(context, state);
+      },
+    },
+    closeCall: {
+      description:
+        "Close a call, with the reason. Candidates that answered it keep the link.",
+      arguments: z.object({ id: z.string(), note: z.string() }),
+      execute: async (args: { id: string; note: string }, context: Ctx) => {
+        const state = await load(context);
+        const call = Object.hasOwn(state.calls, args.id)
+          ? state.calls[args.id]
+          : undefined;
+        if (!call) throw new Error(`No call '${args.id}'.`);
+        state.calls[args.id] = closeCall(call, args.note);
+        return save(context, state);
+      },
+    },
+    answer: {
+      description:
+        "Link a tracked extension to the open call it answers. This is stage 0's evidence.",
+      arguments: z.object({ extension: z.string(), call: z.string() }),
+      execute: async (
+        args: { extension: string; call: string },
+        context: Ctx,
+      ) => {
+        const state = await load(context);
+        const store = state.candidates;
+        store[args.extension] = answerCall(
+          tracked(store, args.extension),
+          state.calls,
+          args.call,
+        );
+        return save(context, state);
+      },
+    },
     track: {
       description:
         "Start tracking an extension in one of your collectives (stage 0 or 1).",
@@ -226,7 +301,8 @@ export const model = {
         const reg = args._registry ?? swampRegistry;
         const who = await reg.whoami();
         assertOwnCollective(args.extension, who.collectives);
-        const store = await load(context);
+        const state = await load(context);
+        const store = state.candidates;
         if (store[args.extension]) {
           throw new Error(`${args.extension} is already tracked.`);
         }
@@ -235,7 +311,7 @@ export const model = {
           args.stage as Stage,
         );
         context.logger.info("Tracking {e}", { e: args.extension });
-        return save(context, store);
+        return save(context, state);
       },
     },
     record: {
@@ -286,9 +362,10 @@ export const model = {
         context: Ctx,
       ) => {
         const { extension, ...evidence } = args;
-        const store = await load(context);
+        const state = await load(context);
+        const store = state.candidates;
         store[extension] = record(tracked(store, extension), evidence);
-        return save(context, store);
+        return save(context, state);
       },
     },
     decide: {
@@ -303,13 +380,14 @@ export const model = {
         args: { extension: string; outcome: Outcome; note: string },
         context: Ctx,
       ) => {
-        const store = await load(context);
+        const state = await load(context);
+        const store = state.candidates;
         store[args.extension] = decide(
           tracked(store, args.extension),
           args.outcome,
           args.note,
         );
-        return save(context, store);
+        return save(context, state);
       },
     },
     untrack: {
@@ -317,11 +395,12 @@ export const model = {
         "Stop tracking an extension. Older stored versions keep its history.",
       arguments: z.object({ extension: z.string() }),
       execute: async (args: { extension: string }, context: Ctx) => {
-        const store = await load(context);
+        const state = await load(context);
+        const store = state.candidates;
         tracked(store, args.extension);
         delete store[args.extension];
         context.logger.info("Untracked {e}", { e: args.extension });
-        return save(context, store);
+        return save(context, state);
       },
     },
     refresh: {
@@ -333,7 +412,8 @@ export const model = {
         context: Ctx,
       ) => {
         const reg = args._registry ?? swampRegistry;
-        const store = await load(context);
+        const state = await load(context);
+        const store = state.candidates;
         const now = new Date().toISOString();
         for (const name of Object.keys(store)) {
           // A rerun on the same day must not add a second reading.
@@ -348,7 +428,7 @@ export const model = {
             });
           }
         }
-        return save(context, store);
+        return save(context, state);
       },
     },
     advance: {
@@ -363,13 +443,14 @@ export const model = {
         args: { extension: string; to: number; note: string },
         context: Ctx,
       ) => {
-        const store = await load(context);
+        const state = await load(context);
+        const store = state.candidates;
         store[args.extension] = advance(
           tracked(store, args.extension),
           args.to as Stage,
           args.note,
         );
-        return save(context, store);
+        return save(context, state);
       },
     },
     report: {
@@ -377,13 +458,15 @@ export const model = {
         "Write the markdown and HTML reports of every tracked extension.",
       arguments: z.object({}),
       execute: async (_args: Record<string, never>, context: Ctx) => {
-        const store = await load(context);
+        const state = await load(context);
+        const store = state.candidates;
         const candidates = Object.values(store);
+        const calls = Object.values(state.calls);
         const now = new Date().toISOString();
         const md = await context.createFileWriter("report", "weekly")
-          .writeText(renderReport(candidates, now));
+          .writeText(renderReport(candidates, now, calls));
         const html = await context.createFileWriter("reportHtml", "weekly")
-          .writeText(renderReportHtml(candidates, now));
+          .writeText(renderReportHtml(candidates, now, calls));
         return { dataHandles: [md, html] };
       },
     },

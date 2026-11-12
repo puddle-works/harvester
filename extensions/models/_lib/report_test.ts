@@ -8,6 +8,7 @@ import {
   addReading,
   decide,
   newCandidate,
+  openCall,
   record,
   type RegistryFacts,
 } from "./harvest.ts";
@@ -122,4 +123,34 @@ Deno.test("reports distinguish closed outcomes and legacy adoption from missing 
     assert(report.includes("Legacy stage 6"));
     assert(report.includes("Reuse review:"));
   }
+});
+
+Deno.test("reports list calls, including unanswered ones, even with nothing tracked", () => {
+  const open = openCall(
+    {},
+    "fast-onboarding",
+    "Onboard <fast>",
+    "Dev platform",
+    T0,
+  );
+  const quiet = openCall({}, "audit-logs", "Shared audit logs", "Security", T0);
+  const answering = { ...newCandidate("@a/tool"), callId: open.id };
+  const md = renderReport([answering], T1, [quiet, open]);
+  assert(md.includes("## Calls for capabilities"));
+  assert(
+    md.includes(
+      "audit-logs (Security): Shared audit logs Open. No candidate has answered yet.",
+    ),
+  );
+  assert(md.includes("Answered by @a/tool"));
+  assert(md.includes("Answers call: fast-onboarding"));
+  assert(
+    renderReport([], T1, [quiet]).includes("No candidate has answered yet"),
+  );
+  const html = renderReportHtml([], T1, [open]);
+  assert(html.includes("Calls for capabilities"));
+  assert(
+    html.includes("Onboard &lt;fast&gt;") && !html.includes("Onboard <fast>"),
+  );
+  assert(!renderReport([answering], T1).includes("Calls for capabilities"));
 });

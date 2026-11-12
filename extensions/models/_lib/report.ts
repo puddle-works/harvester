@@ -4,7 +4,31 @@
  *
  * @module
  */
-import { blockers, type Candidate, flags, STAGE_NAMES } from "./harvest.ts";
+import {
+  blockers,
+  type Candidate,
+  type CapabilityCall,
+  flags,
+  STAGE_NAMES,
+} from "./harvest.ts";
+
+/** Each call with the tracked extensions that answer it, open calls first. */
+function callRows(calls: CapabilityCall[], candidates: Candidate[]) {
+  return [...calls]
+    .sort((a, b) => Number(!!a.closedAt) - Number(!!b.closedAt))
+    .map((call) => ({
+      call,
+      answers: candidates.filter((c) => c.callId === call.id)
+        .map((c) => c.extension),
+    }));
+}
+
+function callStatus(call: CapabilityCall, answers: string[]): string {
+  if (call.closedAt) return `Closed: ${call.closeNote}`;
+  return answers.length === 0
+    ? "Open. No candidate has answered yet."
+    : `Open. Answered by ${answers.join(", ")}.`;
+}
 
 function change(c: Candidate): string {
   const r = c.readings;
@@ -59,8 +83,23 @@ function progress(c: Candidate) {
 }
 
 /** Render the report as markdown. */
-export function renderReport(candidates: Candidate[], now: string): string {
+export function renderReport(
+  candidates: Candidate[],
+  now: string,
+  calls: CapabilityCall[] = [],
+): string {
   const out = [`# Harvester report`, ``, `Taken ${now}.`, ``];
+  if (calls.length > 0) {
+    out.push(`## Calls for capabilities`, ``);
+    for (const { call, answers } of callRows(calls, candidates)) {
+      out.push(
+        `- ${call.id} (${call.platform}): ${call.need} ${
+          callStatus(call, answers)
+        }`,
+      );
+    }
+    out.push(``);
+  }
   if (candidates.length === 0) {
     out.push("No extensions are tracked.");
     return out.join("\n") + "\n";
@@ -89,6 +128,7 @@ export function renderReport(candidates: Candidate[], now: string): string {
       ``,
       state.message,
     );
+    if (c.callId) out.push(`Answers call: ${c.callId}`);
     if (c.decision) out.push(`Decision notes: ${c.decision}`);
     if (c.reuseNotes) out.push(`Reuse review: ${c.reuseNotes}`);
     for (const s of state.stops) out.push(`- ${s}`);
@@ -143,7 +183,20 @@ const MARK =
   `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="7" r="3" fill="currentColor"/><ellipse cx="16" cy="19" rx="5" ry="2.25" fill="currentColor"/><ellipse cx="16" cy="19" rx="9" ry="4.5" stroke="currentColor" stroke-width="1.5" opacity=".55"/><ellipse cx="16" cy="19" rx="14" ry="7" stroke="currentColor" stroke-width="1" opacity=".25"/></svg>`;
 
 /** Render the report as one self-contained HTML page: a stage track per extension. */
-export function renderReportHtml(candidates: Candidate[], now: string): string {
+export function renderReportHtml(
+  candidates: Candidate[],
+  now: string,
+  calls: CapabilityCall[] = [],
+): string {
+  const callCards = callRows(calls, candidates).map(({ call, answers }) =>
+    `<div class="card"><div class="top"><span class="name">${
+      escapeHtml(call.id)
+    }</span><span class="meta">${escapeHtml(call.platform)}</span>` +
+    `<span class="badge ${call.closedAt ? "settled" : "waiting"}">${
+      call.closedAt ? "Closed" : "Open"
+    }</span></div><div class="state">${escapeHtml(call.need)}</div>` +
+    `<div class="state">${escapeHtml(callStatus(call, answers))}</div></div>`
+  ).join("");
   const states = candidates.map(progress);
   const ready = states.filter((s) => s.ready).length;
   const waiting = states.filter((s) => s.label === "Waiting").length;
@@ -175,6 +228,10 @@ export function renderReportHtml(candidates: Candidate[], now: string): string {
       `<div class="state">${state.message} Platform: ${
         escapeHtml(c.platform ?? "none named")
       }. Steward: ${escapeHtml(c.steward ?? "none named")}.</div>${
+        c.callId
+          ? `<div class="state">Answers call: ${escapeHtml(c.callId)}</div>`
+          : ""
+      }${
         c.decision
           ? `<div class="state">Decision notes: ${escapeHtml(c.decision)}</div>`
           : ""
@@ -195,6 +252,7 @@ export function renderReportHtml(candidates: Candidate[], now: string): string {
     `<header>${MARK}<span class="brand-name">puddle <span>works</span></span>` +
     `<span class="brand-app">Harvester</span></header><main>` +
     `<h1>${title}</h1><p class="sub">Report taken ${escapeHtml(now)}.</p>` +
+    (callCards ? `<h2>Calls for capabilities</h2>${callCards}` : "") +
     `<h2>Tracked extensions</h2>${rows}` +
     `<p class="key">${
       STAGE_NAMES.map((n, i) => `${i} ${n}`).join(" · ")

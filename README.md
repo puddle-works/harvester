@@ -17,7 +17,7 @@ activities, not a checklist prescribed by Skelton.
 
 | Stage | Name | Evidence |
 | --- | --- | --- |
-| 0 | Call for capabilities | `requestRef`: link the capability need, calling platform and intended users. The Lab is one possible place to keep it. |
+| 0 | Call for capabilities | A platform posts a call with `call`, before any extension exists. A tracked extension moves on once it `answer`s an open call, or links an outside request in `requestRef`. |
 | 1 | Candidate | `discoveryNotes`: source team, how it was found, follow-up owner/action. `flowEvidence`: a demonstrated improvement to flow or reduced effort. |
 | 2 | Value proposition | `valueStatement`: wider value, beneficiaries, incentives to share, stewardship costs and how to assess benefit. |
 | 3 | Showcase | A `showcase` record and `interest` from prospective consumers or platforms, with their feedback. A steward need not be agreed yet. |
@@ -88,12 +88,15 @@ swamp model create @puddleworks/harvester harvester
 Then track extensions, record evidence and move them on:
 
 ```sh
-swamp model method run harvester track --input extension=@acme/tool
+swamp model method run harvester call --input id=fast-onboarding --input need="Onboard a new team in a day" --input platform="Developer platform"
+swamp model method run harvester track --input extension=@acme/tool --input stage=0
+swamp model method run harvester answer --input extension=@acme/tool --input call=fast-onboarding
 swamp model method run harvester record --input extension=@acme/tool --input steward=platform-team
 swamp model method run harvester advance --input extension=@acme/tool --input to=2 --input note="why"
 swamp model method run harvester decide --input extension=@acme/tool --input outcome=deferred --input note="No support capacity yet"
 swamp model method run harvester decide --input extension=@acme/tool --input outcome=active --input note="Capacity now available"
 swamp model method run harvester decide --input extension=@acme/tool --input outcome=adopted --input note="Both teams approved the supported offering"
+swamp model method run harvester closeCall --input id=fast-onboarding --input note="Met by @acme/tool"
 swamp model method run harvester untrack --input extension=@acme/tool   # older stored versions keep its history
 swamp workflow run @puddleworks/harvester-weekly   # weekly: refresh, then report
 ```
@@ -102,10 +105,10 @@ The commands illustrate separate actions, not a complete walkthrough: record
 the table's evidence before advancing or adopting. The steward has no default;
 it must be agreed before leaving stage 4.
 
-`report` writes two files: a markdown report and an HTML page with a stage track
-per extension. Ready means the evidence supports the next activity or decision,
-not an obligation to adopt. Deferred, declined and adopted records are shown
-separately from candidates waiting for evidence.
+`report` writes two files: a markdown report and an HTML page with the calls for
+capabilities and a stage track per extension. Ready means the evidence supports
+the next activity or decision, not an obligation to adopt. Deferred, declined
+and adopted records are shown separately from candidates waiting for evidence.
 
 A second `refresh` on the same UTC day adds no reading, so a rerun is safe.
 
@@ -117,8 +120,9 @@ profile emails.
 ## Limits
 
 This remains a tracker for nominated extensions in your own collectives, not a
-registry-wide harvesting programme. Calls without an identified extension and
-external leads must currently stay in the Lab or another linked record.
+registry-wide harvesting programme. Calls need no extension, and the report
+lists open calls nobody has answered yet. Leads in other collectives are not
+tracked; record them in a call or in the Lab.
 `discoveryNotes` connects nominations to conferences, communities and outreach;
 Harvester does not conduct those activities or automatically enrol search results.
 Those discovery and ownership boundaries are implementation limits, not rules

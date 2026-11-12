@@ -16,6 +16,19 @@ export type Stage = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 /** A harvesting decision, independent of the activity stage. */
 export type Outcome = "active" | "deferred" | "declined" | "adopted";
 
+/**
+ * Node 0: a platform area posts a call for a capability it needs. A call
+ * exists before any extension answers it, and several candidates may answer.
+ */
+export interface CapabilityCall {
+  id: string;
+  need: string;
+  platform: string;
+  openedAt: string;
+  closedAt: string | null;
+  closeNote: string | null;
+}
+
 /** Optional registry classification; never evidence of an agreement. */
 export const CORE_LABEL = "harvest-core";
 
@@ -72,6 +85,8 @@ export interface Candidate {
   steward: string | null;
   platform: string | null;
   requestRef: string | null;
+  /** The {@link CapabilityCall} this candidate answers, if any. */
+  callId: string | null;
   discoveryNotes: string | null;
   flowEvidence: string | null;
   valueStatement: string | null;
@@ -165,6 +180,7 @@ export function newCandidate(
     steward: null,
     platform: null,
     requestRef: null,
+    callId: null,
     discoveryNotes: null,
     flowEvidence: null,
     valueStatement: null,
@@ -250,6 +266,59 @@ export function record(
   return next;
 }
 
+const CALL_ID = /^[a-z0-9][a-z0-9-]*$/;
+
+/** Post a call for a capability. No extension needs to exist yet. */
+export function openCall(
+  calls: Record<string, CapabilityCall>,
+  id: string,
+  need: string,
+  platform: string,
+  now: string = new Date().toISOString(),
+): CapabilityCall {
+  if (!CALL_ID.test(id)) {
+    throw new Error(
+      `Call id '${id}' must be lower-case letters, digits and hyphens.`,
+    );
+  }
+  if (Object.hasOwn(calls, id)) throw new Error(`Call '${id}' already exists.`);
+  if (!need.trim()) throw new Error("Describe the capability needed (need).");
+  if (!platform.trim()) {
+    throw new Error("Name the platform posting the call (platform).");
+  }
+  return {
+    id,
+    need: need.trim(),
+    platform: platform.trim(),
+    openedAt: now,
+    closedAt: null,
+    closeNote: null,
+  };
+}
+
+/** Close a call, with the reason. Candidates that answered it keep the link. */
+export function closeCall(
+  call: CapabilityCall,
+  note: string,
+  now: string = new Date().toISOString(),
+): CapabilityCall {
+  if (call.closedAt) throw new Error(`Call '${call.id}' is already closed.`);
+  if (!note.trim()) throw new Error("Closing a call needs a reason.");
+  return { ...call, closedAt: now, closeNote: note.trim() };
+}
+
+/** Link a candidate to the open call it answers. */
+export function answerCall(
+  candidate: Candidate,
+  calls: Record<string, CapabilityCall>,
+  id: string,
+): Candidate {
+  const call = Object.hasOwn(calls, id) ? calls[id] : undefined;
+  if (!call) throw new Error(`No call '${id}'. Open it with 'call' first.`);
+  if (call.closedAt) throw new Error(`Call '${id}' is closed.`);
+  return { ...candidate, callId: id };
+}
+
 function adoptionBlockers(c: Candidate): string[] {
   const out: string[] = [];
   if (!c.platform) out.push("Name the adopting platform (platform).");
@@ -298,9 +367,9 @@ export function blockers(candidate: Candidate, to: Stage): string[] {
   if (to !== c.stage + 1) return ["Move only to the next stage."];
   switch (c.stage) {
     case 0:
-      if (!c.requestRef) {
+      if (!c.requestRef && !c.callId) {
         out.push(
-          "Link the call for capabilities and intended users (requestRef).",
+          "Answer an open call (call) or link the request it answers (requestRef).",
         );
       }
       break;

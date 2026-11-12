@@ -343,6 +343,63 @@ Deno.test("old stage 6 data retains its evidence without inferring adoption", as
   assertEquals(adopted.cycle, 2);
 });
 
+Deno.test("a call is stored, answered, reported and closed", async () => {
+  const first = createModelTestContext({
+    storedResources: {
+      // Data from before calls existed has no calls key.
+      candidates: {
+        candidates: { "@acme/tool": newCandidate("@acme/tool", 0) },
+      },
+    },
+  });
+  await model.methods.call.execute({
+    id: "fast-onboarding",
+    need: "Onboard a new team in a day",
+    platform: "Developer platform",
+  }, first.context);
+  type Saved = {
+    candidates: Record<string, Candidate>;
+    calls: Record<string, { closedAt: string | null }>;
+  };
+  let saved = first.getWrittenResources()[0].data as unknown as Saved;
+  assert("@acme/tool" in saved.candidates);
+  const second = createModelTestContext({
+    storedResources: { candidates: saved },
+  });
+  await model.methods.answer.execute(
+    { extension: "@acme/tool", call: "fast-onboarding" },
+    second.context,
+  );
+  saved = second.getWrittenResources()[0].data as unknown as Saved;
+  assertEquals(saved.candidates["@acme/tool"].callId, "fast-onboarding");
+  const third = createModelTestContext({
+    storedResources: { candidates: saved },
+  });
+  await model.methods.advance.execute(
+    { extension: "@acme/tool", to: 1, note: "answers the call" },
+    third.context,
+  );
+  await model.methods.report.execute({}, third.context);
+  const md = third.getWrittenFiles()[0].text ?? "";
+  assert(md.includes("Answered by @acme/tool"));
+  await model.methods.closeCall.execute(
+    { id: "fast-onboarding", note: "Met" },
+    third.context,
+  );
+  const closed = third.getWrittenResources().at(-1)!.data as unknown as Saved;
+  assert(closed.calls["fast-onboarding"].closedAt);
+  assertEquals(closed.candidates["@acme/tool"].stage, 1);
+  await assertRejects(
+    () =>
+      model.methods.closeCall.execute(
+        { id: "missing", note: "x" },
+        third.context,
+      ),
+    Error,
+    "No call",
+  );
+});
+
 Deno.test("report writes a markdown file", async () => {
   const { context, getWrittenFiles } = createModelTestContext({
     storedResources: {

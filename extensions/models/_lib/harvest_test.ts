@@ -8,13 +8,16 @@ import { assert, assertEquals, assertThrows } from "jsr:@std/assert@1";
 import {
   addReading,
   advance,
+  answerCall,
   assertOwnCollective,
   blockers,
   type Candidate,
+  closeCall,
   CORE_LABEL,
   decide,
   flags,
   newCandidate,
+  openCall,
   parseInfo,
   parseWhoami,
   readToday,
@@ -354,4 +357,56 @@ Deno.test("defer and decline retain evidence and require a reasoned resume", () 
     assertEquals(advance(resumed, 2, "continue").stage, 2);
     assertEquals(resumed.decisions.map((d) => d.outcome), [outcome, "active"]);
   }
+});
+
+Deno.test("a call exists before any extension and stage 0 accepts answering it", () => {
+  const call = openCall(
+    {},
+    "fast-onboarding",
+    "Onboard in a day",
+    "Dev platform",
+    T0,
+  );
+  assertEquals(call.closedAt, null);
+  const calls = { [call.id]: call };
+  assertThrows(
+    () => openCall(calls, "fast-onboarding", "x", "y"),
+    Error,
+    "already exists",
+  );
+  assertThrows(() => openCall({}, "Bad Id", "x", "y"), Error, "lower-case");
+  assertThrows(() => openCall({}, "ok", " ", "y"), Error, "need");
+  assertThrows(() => openCall({}, "ok", "x", " "), Error, "platform");
+  const c = newCandidate("@a/b", 0, T0);
+  assertThrows(() => advance(c, 1, "go"), Error, "call");
+  assertThrows(() => answerCall(c, calls, "missing"), Error, "No call");
+  assertThrows(() => answerCall(c, calls, "constructor"), Error, "No call");
+  const answered = answerCall(c, calls, "fast-onboarding");
+  assertEquals(advance(answered, 1, "answers the call").stage, 1);
+});
+
+Deno.test("a closed call keeps its answers but takes no new ones", () => {
+  const call = openCall(
+    {},
+    "fast-onboarding",
+    "Onboard in a day",
+    "Dev platform",
+    T0,
+  );
+  const linked = answerCall(
+    newCandidate("@a/b", 0, T0),
+    { [call.id]: call },
+    call.id,
+  );
+  const closed = closeCall(call, "Met by @a/b", T1);
+  assertEquals(closed.closeNote, "Met by @a/b");
+  assertThrows(() => closeCall(closed, "again"), Error, "already closed");
+  assertThrows(() => closeCall(call, " "), Error, "reason");
+  assertThrows(
+    () =>
+      answerCall(newCandidate("@a/c", 0, T0), { [call.id]: closed }, call.id),
+    Error,
+    "closed",
+  );
+  assertEquals(linked.callId, call.id);
 });
