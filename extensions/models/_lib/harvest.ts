@@ -369,7 +369,7 @@ export function blockers(candidate: Candidate, to: Stage): string[] {
     case 0:
       if (!c.requestRef && !c.callId) {
         out.push(
-          "Answer an open call (call) or link the request it answers (requestRef).",
+          "Link it to an open call with 'answer', or record the outside request (requestRef).",
         );
       }
       break;
@@ -552,17 +552,27 @@ export function parseInfo(info: Record<string, unknown>): RegistryFacts {
   };
 }
 
-/** Pick the username and collectives out of `swamp auth whoami --json`. */
+/**
+ * Pick the username and collectives out of `swamp auth whoami --json`. A
+ * collective token (as used in CI) has no username: it acts for the one
+ * collective in `collectiveSlug`, which stands in for the name.
+ */
 export function parseWhoami(
   who: Record<string, unknown>,
 ): { username: string; collectives: string[] } {
-  if (typeof who.username !== "string") {
-    throw new Error("Not signed in: run `swamp auth login`.");
-  }
+  const slug = who.collectiveToken === true &&
+      typeof who.collectiveSlug === "string" && who.collectiveSlug
+    ? who.collectiveSlug
+    : null;
+  const username = typeof who.username === "string" && who.username
+    ? who.username
+    : slug;
+  if (!username) throw new Error("Not signed in: run `swamp auth login`.");
+  const listed = Array.isArray(who.collectives)
+    ? who.collectives.filter((c): c is string => typeof c === "string")
+    : [];
   return {
-    username: who.username,
-    collectives: Array.isArray(who.collectives)
-      ? who.collectives.filter((c): c is string => typeof c === "string")
-      : [],
+    username,
+    collectives: slug && !listed.includes(slug) ? [...listed, slug] : listed,
   };
 }

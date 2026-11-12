@@ -71,7 +71,8 @@ remain supporting context; growth is never required to move on.
 
 Only extensions in your own collectives can be tracked (checked against
 `swamp auth whoami`). Only the username and collectives are read from your
-account; no email or name is stored.
+account; no email or name is stored. A collective token works too: it has no
+username, so its own collective is used.
 
 Harvester reads the registry by running `swamp auth whoami` and
 `swamp extension info` as subprocesses, so `swamp` must be on your `PATH`. Those
@@ -121,8 +122,10 @@ profile emails.
 
 This remains a tracker for nominated extensions in your own collectives, not a
 registry-wide harvesting programme. Calls need no extension, and the report
-lists open calls nobody has answered yet. Leads in other collectives are not
-tracked; record them in a call or in the Lab.
+lists open calls nobody has answered yet. A call cannot be edited or reopened:
+close it with a reason and post a new one. A recorded adoption cannot be
+withdrawn. Leads in other collectives are not tracked; record them in a call or
+in the Lab.
 `discoveryNotes` connects nominations to conferences, communities and outreach;
 Harvester does not conduct those activities or automatically enrol search results.
 Those discovery and ownership boundaries are implementation limits, not rules

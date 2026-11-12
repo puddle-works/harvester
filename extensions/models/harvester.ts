@@ -4,7 +4,8 @@
  *
  * It records and reports; a person decides. It never deprecates, transfers or
  * contacts anyone. Only extensions in the runner's own collectives can be
- * tracked, and only `username` and `collectives` are read from the account.
+ * tracked, and only the username (or a collective token's collective) and
+ * `collectives` are read from the account.
  *
  * Output: a `candidates` resource holding every tracked extension, and the
  * weekly `report` as a markdown file and as an HTML page.
@@ -251,6 +252,7 @@ export const model = {
           args.need,
           args.platform,
         );
+        context.logger.info("Opened call {id}", { id: args.id });
         return save(context, state);
       },
     },
@@ -265,6 +267,7 @@ export const model = {
           : undefined;
         if (!call) throw new Error(`No call '${args.id}'.`);
         state.calls[args.id] = closeCall(call, args.note);
+        context.logger.info("Closed call {id}", { id: args.id });
         return save(context, state);
       },
     },
@@ -283,6 +286,10 @@ export const model = {
           state.calls,
           args.call,
         );
+        context.logger.info("{e} answers call {id}", {
+          e: args.extension,
+          id: args.call,
+        });
         return save(context, state);
       },
     },
@@ -365,6 +372,10 @@ export const model = {
         const state = await load(context);
         const store = state.candidates;
         store[extension] = record(tracked(store, extension), evidence);
+        context.logger.info("Recorded {fields} for {e}", {
+          fields: Object.keys(evidence).join(", "),
+          e: extension,
+        });
         return save(context, state);
       },
     },
@@ -387,6 +398,10 @@ export const model = {
           args.outcome,
           args.note,
         );
+        context.logger.info("Decision for {e}: {outcome}", {
+          e: args.extension,
+          outcome: args.outcome,
+        });
         return save(context, state);
       },
     },
@@ -415,11 +430,13 @@ export const model = {
         const state = await load(context);
         const store = state.candidates;
         const now = new Date().toISOString();
+        let read = 0;
         for (const name of Object.keys(store)) {
           // A rerun on the same day must not add a second reading.
           if (readToday(store[name], now)) continue;
           try {
             store[name] = addReading(store[name], await reg.info(name));
+            read++;
           } catch (error) {
             // One unreadable extension must not lose this week's other readings.
             context.logger.warn("Could not read {e}: {error}", {
@@ -428,6 +445,13 @@ export const model = {
             });
           }
         }
+        context.logger.info(
+          "Added {read} reading(s) for {total} extension(s)",
+          {
+            read,
+            total: Object.keys(store).length,
+          },
+        );
         return save(context, state);
       },
     },
@@ -450,6 +474,10 @@ export const model = {
           args.to as Stage,
           args.note,
         );
+        context.logger.info("Moved {e} to stage {to}", {
+          e: args.extension,
+          to: args.to,
+        });
         return save(context, state);
       },
     },
@@ -463,10 +491,17 @@ export const model = {
         const candidates = Object.values(store);
         const calls = Object.values(state.calls);
         const now = new Date().toISOString();
+        // Render both before writing either, so a failure writes neither.
+        const markdown = renderReport(candidates, now, calls);
+        const page = renderReportHtml(candidates, now, calls);
         const md = await context.createFileWriter("report", "weekly")
-          .writeText(renderReport(candidates, now, calls));
+          .writeText(markdown);
         const html = await context.createFileWriter("reportHtml", "weekly")
-          .writeText(renderReportHtml(candidates, now, calls));
+          .writeText(page);
+        context.logger.info(
+          "Wrote the report: {extensions} extension(s), {calls} call(s)",
+          { extensions: candidates.length, calls: calls.length },
+        );
         return { dataHandles: [md, html] };
       },
     },

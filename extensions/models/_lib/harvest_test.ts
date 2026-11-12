@@ -262,6 +262,27 @@ Deno.test("parseWhoami keeps only the username and collectives", () => {
   assertEquals(who, { username: "ada", collectives: ["acme", "ada"] });
 });
 
+Deno.test("parseWhoami accepts a collective token, which has no username", () => {
+  // The shape `swamp auth whoami --json` prints for a collective token.
+  const token = {
+    authenticated: true,
+    collectiveToken: true,
+    collectiveSlug: "acme",
+  };
+  assertEquals(parseWhoami({ ...token, collectives: ["acme"] }), {
+    username: "acme",
+    collectives: ["acme"],
+  });
+  // An older server lists no collectives; the token still acts for its own.
+  assertEquals(parseWhoami(token).collectives, ["acme"]);
+  assertThrows(() => parseWhoami({}), Error, "Not signed in");
+  assertThrows(
+    () => parseWhoami({ collectiveSlug: "acme" }),
+    Error,
+    "Not signed in",
+  );
+});
+
 Deno.test("only extensions in the runner's own collectives may be tracked", () => {
   assertOwnCollective("@acme/tool", ["acme"]);
   assertThrows(
