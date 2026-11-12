@@ -1,7 +1,7 @@
 manifestVersion: 1
 name: "@puddleworks/harvester"
-version: "2026.11.09.1"
-description: "Moves swamp extensions through Matthew Skelton's harvesting stages: records the evidence each stage needs, takes weekly pull readings and reports what blocks each extension."
+version: "2026.11.12.1"
+description: "Records evidence for Matthew Skelton's harvesting activities, negotiated adoption decisions and voluntary reuse, with weekly pull readings as supporting context."
 labels:
   - harvesting
   - stewardship

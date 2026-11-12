@@ -12,6 +12,7 @@ import {
   blockers,
   type Candidate,
   CORE_LABEL,
+  decide,
   flags,
   newCandidate,
   parseInfo,
@@ -57,43 +58,42 @@ Deno.test("a name must be @collective/name", () => {
   assertThrows(() => newCandidate("capture", 1, T0), Error, "@collective/name");
 });
 
-Deno.test("stage 0 needs a Lab request linked before it moves on", () => {
+Deno.test("stage 0 needs a capability request linked before it moves on", () => {
   const c = newCandidate("@a/b", 0, T0);
-  assertEquals(blockers(c, 1), ["Link the Lab feature request (requestRef)."]);
+  assertThrows(() => advance(c, 1, "go"), Error, "requestRef");
   const linked = record(c, { requestRef: "https://swamp-club.com/lab/1" });
   assertEquals(blockers(linked, 1), []);
 });
 
-Deno.test("stage 1 needs pull growth across two readings", () => {
+Deno.test("pull growth cannot substitute for discovery and demonstrated flow", () => {
   let c = newCandidate("@a/b", 1, T0);
-  assertEquals(blockers(c, 2), [
-    "Take at least two readings to see pull growth.",
-  ]);
   c = addReading(c, good, T0);
-  c = addReading(c, good, T1);
-  assertEquals(blockers(c, 2), ["Pulls have not grown between the readings."]);
   c = addReading(c, { ...good, pullCount: 55 }, T2);
-  assertEquals(blockers(c, 2), []);
+  assertThrows(() => advance(c, 2, "popular"), Error, "flowEvidence");
+  c = record(c, { flowEvidence: "Onboarding fell from 2 days to 30 minutes." });
+  assertThrows(() => advance(c, 2, "go"), Error, "discoveryNotes");
+  c = record(c, {
+    discoveryNotes: "Payments demo; platform team will follow up.",
+  });
+  assertEquals(advance(c, 2, "useful").stage, 2);
 });
 
-Deno.test("stage 2 needs licence, verified repo, score and a value statement", () => {
+Deno.test("registry readiness is advice, not evidence of wider value", () => {
   let c = at(2);
-  assertEquals(blockers(c, 3), [
-    "Take a reading so the registry facts are known.",
-    "Write the value statement (valueStatement).",
-  ]);
   c = addReading(c, {
     ...good,
     license: null,
     repositoryVerified: false,
     scorePercentage: 38,
   }, T0);
-  assertEquals(blockers(c, 3), [
-    "Add a licence to the extension.",
-    "Verify the extension's repository.",
-    "Raise the quality score to 80 or more (now 38).",
-    "Write the value statement (valueStatement).",
-  ]);
+  assertThrows(() => advance(c, 3, "go"), Error, "valueStatement");
+  c = record(c, {
+    valueStatement:
+      "Three teams save onboarding effort; source team shares support costs.",
+  });
+  assertEquals(advance(c, 3, "show it").stage, 3);
+  assertEquals(flags(c).length, 3);
+  assert(flags(c).every((f) => f.startsWith("Readiness:")));
 });
 
 Deno.test("an unverified repo reported as null counts as not verified", () => {
@@ -102,46 +102,42 @@ Deno.test("an unverified repo reported as null counts as not verified", () => {
     ...good,
     repositoryVerified: null as unknown as boolean,
   }, T0);
-  assert(blockers(c, 3).includes("Verify the extension's repository."));
+  assert(flags(c).includes("Readiness: the repository is not verified."));
 });
 
-Deno.test("stage 3 needs a showcase record, and the steward to enter stage 4", () => {
-  const c = at(3);
-  assertEquals(blockers(c, 4), [
-    "Record where it was shown (showcase).",
-    "Name the steward (steward).",
-  ]);
+Deno.test("a showcase needs buyer interest, not a prematurely appointed steward", () => {
+  let c = record(at(3), { showcase: "Platform community demo" });
+  assertThrows(() => advance(c, 4, "go"), Error, "interest");
+  c = record(c, {
+    interest: "Developer platform wants a trial with two teams.",
+  });
+  assertEquals(advance(c, 4, "negotiate").steward, null);
 });
 
-Deno.test("stage 4 needs notes, a decision and a reading as the baseline", () => {
-  const c = at(4);
-  assertEquals(blockers(c, 5), [
-    "Record the negotiation notes (negotiationNotes).",
-    "Record the stewardship decision (decision).",
-    "Take a reading to be the 'before' pull count.",
-  ]);
-});
-
-Deno.test("stage 5 needs credit, the core label and a later reading", () => {
-  let c = at(5);
+Deno.test("a free-text decision does not establish agreement to collaborate", () => {
+  let c = record(at(4), {
+    steward: "platform-team",
+    platform: "developer platform",
+    negotiationNotes: "Discussed responsibilities",
+    decision: "declined",
+  });
   c = addReading(c, good, T0);
-  c = { ...c, baselinePulls: 40 };
-  assertEquals(blockers(c, 6), [
-    "Credit the original author (credit).",
-    `Add the '${CORE_LABEL}' label to the extension and publish it.`,
-    "Take a reading after entering stage 5 for the 'after' pull count.",
-  ]);
+  assertThrows(() => advance(c, 5, "go"), Error, "collaborationAgreement");
 });
 
-Deno.test("stage 6 loops back to 0 as a new cycle", () => {
+Deno.test("core label, credit and readings do not establish adoption", () => {
+  let c = record(at(5), { credit: "source team", decision: "adopted" });
+  c = addReading(c, { ...good, labels: [CORE_LABEL] }, T1);
+  assertThrows(() => decide(c, "adopted", "go"), Error, "adoptionAgreement");
+  assertThrows(() => advance(c, 6, "go"), Error, "Use decide");
+});
+
+Deno.test("stage 6 cannot reset the adoption evidence", () => {
   let c = at(6);
   c = { ...c, steward: "platform-team", decision: "adopted", credit: "ada" };
-  assertEquals(blockers(c, 0), []);
-  const next = advance(c, 0, "start over", T1);
-  assertEquals(next.stage, 0);
-  assertEquals(next.cycle, 2);
-  assertEquals(next.steward, "platform-team");
-  assertEquals(next.decision, null);
+  assertThrows(() => advance(c, 0, "start over", T1), Error, "never resets");
+  assertEquals(c.decision, "adopted");
+  assertEquals(c.credit, "ada");
 });
 
 Deno.test("an extension cannot skip or go back a stage", () => {
@@ -155,7 +151,7 @@ Deno.test("advance refuses while anything blocks and says what", () => {
   assertThrows(
     () => advance(c, 2, "go", T1),
     Error,
-    "Take at least two readings",
+    "flowEvidence",
   );
 });
 
@@ -174,8 +170,10 @@ Deno.test("entering stage 5 stores the latest pull count as the baseline", () =>
   c = addReading(c, good, T0);
   c = record(c, {
     steward: "platform-team",
+    platform: "developer platform",
     negotiationNotes: "agreed",
-    decision: "adopted",
+    collaborationAgreement:
+      "Both teams agree to a trial; source team retains care.",
   });
   const next = advance(c, 5, "handover", T1);
   assertEquals(next.baselinePulls, 40);
@@ -207,19 +205,19 @@ Deno.test("a reading keeps the latest facts and the stage it was taken at", () =
   assertEquals(c.facts?.license, "MIT");
 });
 
-Deno.test("flags a core label with no stewardship decision", () => {
+Deno.test("flags a core label without explicit adoption", () => {
   let c = at(2);
   c = addReading(c, { ...good, labels: [CORE_LABEL] }, T0);
   assertEquals(flags(c), [
-    `Has the '${CORE_LABEL}' label but no stewardship decision is recorded.`,
+    `Has the '${CORE_LABEL}' label but no explicit adoption is recorded.`,
   ]);
 });
 
-Deno.test("flags stage 6 when the core label is missing", () => {
+Deno.test("legacy stage 6 requires review, not adding a label", () => {
   let c = at(6);
   c = addReading(c, good, T0);
   assertEquals(flags(c), [
-    `At stage 6 but the '${CORE_LABEL}' label is missing.`,
+    "Legacy stage 6: review the agreement before recording adoption with decide.",
   ]);
 });
 
@@ -275,4 +273,85 @@ Deno.test("readToday is true only when a reading was taken on that UTC day", () 
   assertEquals(readToday(c, "2026-11-06T23:59:00.000Z"), true);
   assertEquals(readToday(c, T1), false);
   assertEquals(readToday(newCandidate("@a/b", 1, T0), T0), false);
+});
+
+Deno.test("a useful capability can be adopted without registry popularity or labels", () => {
+  let c = record(newCandidate("@acme/tool", 0, T0), {
+    requestRef: "Lab call for quicker onboarding",
+    discoveryNotes: "Payments team demo; platform team owns follow-up",
+    flowEvidence: "Onboarding fell from 2 days to 30 minutes",
+    valueStatement: "Three teams benefit; source team shares support effort",
+    showcase: "Engineering community",
+    interest: "Developer platform and two consumer teams want a trial",
+    platform: "developer platform",
+    steward: "platform-team",
+    negotiationNotes:
+      "Source team keeps upstream development; platform supports integration",
+    collaborationAgreement:
+      "Both teams accepted the trial scope and care responsibilities",
+    collaborationNotes:
+      "Trial feedback led to a simpler setup; source team's needs retained",
+    adoptionAgreement:
+      "Both teams accepted support responsibilities; use stays optional",
+    credit: "Payments team",
+  });
+  for (const to of [1, 2, 3, 4, 5] as Stage[]) {
+    c = advance(c, to, "evidence reviewed", T1);
+  }
+  assertEquals(c.baselinePulls, null);
+  assertThrows(() => decide(c, "adopted", "agree"), Error, "offeringRef");
+  c = record(c, { offeringRef: "https://example.com/tool/docs-and-support" });
+  assertThrows(() => decide(c, "adopted", "  "), Error, "reason");
+  const adopted = decide(
+    c,
+    "adopted",
+    "Both teams approved; publish the offering",
+    T2,
+  );
+  assertEquals(adopted.stage, 6);
+  assertEquals(adopted.outcome, "adopted");
+  assertEquals(adopted.decisions, [{
+    outcome: "adopted",
+    note: "Both teams approved; publish the offering",
+    at: T2,
+  }]);
+  assertEquals(adopted.history.at(-1), {
+    from: 5,
+    to: 6,
+    note: "Both teams approved; publish the offering",
+    at: T2,
+  });
+  const reviewed = record(adopted, {
+    reuseNotes: "No other team has chosen to use it yet.",
+  });
+  assertEquals(reviewed.outcome, "adopted");
+  assertEquals(reviewed.adoptionAgreement, adopted.adoptionAgreement);
+  assertEquals(flags(reviewed), []);
+  assertThrows(
+    () => decide(adopted, "active", "restart"),
+    Error,
+    "Keep the adoption agreement",
+  );
+});
+
+Deno.test("defer and decline retain evidence and require a reasoned resume", () => {
+  const c = record(at(1), {
+    flowEvidence: "Faster onboarding",
+    discoveryNotes: "Team demo",
+  });
+  assertThrows(() => decide(c, "adopted", "skip"), Error, "stage 5");
+  for (const outcome of ["deferred", "declined"] as const) {
+    const stopped = decide(c, outcome, "Platform cannot support this yet", T1);
+    assertEquals(stopped.stage, 1);
+    assertEquals(stopped.flowEvidence, c.flowEvidence);
+    assertThrows(() => advance(stopped, 2, "ignore decision"), Error, outcome);
+    assertThrows(
+      () => decide({ ...stopped, stage: 5 }, "adopted", "skip resume"),
+      Error,
+      "active candidate",
+    );
+    const resumed = decide(stopped, "active", "New support capacity", T2);
+    assertEquals(advance(resumed, 2, "continue").stage, 2);
+    assertEquals(resumed.decisions.map((d) => d.outcome), [outcome, "active"]);
+  }
 });

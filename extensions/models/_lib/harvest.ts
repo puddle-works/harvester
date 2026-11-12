@@ -3,9 +3,9 @@
  * needs before an extension may move on, and which registry facts those rules
  * read. Pure functions only, so the rules are testable without swamp.
  *
- * Node 6 has no legend in the diagram. Here it means "marked core" (the
- * extension carries the {@link CORE_LABEL} label), and the loop returns to 0.
- * That reading is an assumption, not Skelton's.
+ * Node 6 has no legend in the diagram. Here it records an agreed adoption
+ * and a usable shared offering. This is a local interpretation, not Skelton's
+ * stage definition. New discovery does not reset an adopted capability.
  *
  * @module
  */
@@ -13,10 +13,13 @@
 /** A stage of the harvesting diagram (0 to 6). */
 export type Stage = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-/** The registry label that marks an extension as core. A person adds it. */
+/** A harvesting decision, independent of the activity stage. */
+export type Outcome = "active" | "deferred" | "declined" | "adopted";
+
+/** Optional registry classification; never evidence of an agreement. */
 export const CORE_LABEL = "harvest-core";
 
-/** The quality score (percent) an extension needs to leave stage 2. */
+/** Local readiness guidance, not a harvesting gate from Skelton's diagram. */
 export const MIN_SCORE = 80;
 
 /** Display names, indexed by stage. */
@@ -26,8 +29,8 @@ export const STAGE_NAMES: readonly string[] = [
   "Value proposition",
   "Showcase",
   "Stewardship",
-  "Collaboration",
-  "Marked core (assumed)",
+  "Collaboration and possible adoption",
+  "Re-commoned (local interpretation)",
 ];
 
 /** The registry facts the rules read. Nothing about people is kept here. */
@@ -60,15 +63,26 @@ export interface Move {
 export interface Candidate {
   extension: string;
   stage: Stage;
-  /** Starts at 1; stage 6 looping back to 0 begins the next cycle. */
+  /** Historical cycle number; retained for existing records. */
   cycle: number;
+  outcome: Outcome;
+  decisions: { outcome: Outcome; note: string; at: string }[];
   trackedAt: string;
   stageEnteredAt: string;
   steward: string | null;
+  platform: string | null;
   requestRef: string | null;
+  discoveryNotes: string | null;
+  flowEvidence: string | null;
   valueStatement: string | null;
   showcases: { where: string; at: string }[];
+  interest: string | null;
   negotiationNotes: string | null;
+  collaborationAgreement: string | null;
+  collaborationNotes: string | null;
+  adoptionAgreement: string | null;
+  offeringRef: string | null;
+  reuseNotes: string | null;
   decision: string | null;
   credit: string | null;
   /** The pull count when stage 5 began, for the before/after comparison. */
@@ -84,8 +98,17 @@ export type Evidence = Partial<
   {
     requestRef: string;
     steward: string;
+    platform: string;
+    discoveryNotes: string;
+    flowEvidence: string;
     valueStatement: string;
+    interest: string;
     negotiationNotes: string;
+    collaborationAgreement: string;
+    collaborationNotes: string;
+    adoptionAgreement: string;
+    offeringRef: string;
+    reuseNotes: string;
     decision: string;
     credit: string;
     /** Where it was shown. Adds to the list rather than replacing it. */
@@ -135,13 +158,24 @@ export function newCandidate(
     extension,
     stage,
     cycle: 1,
+    outcome: "active",
+    decisions: [],
     trackedAt: now,
     stageEnteredAt: now,
     steward: null,
+    platform: null,
     requestRef: null,
+    discoveryNotes: null,
+    flowEvidence: null,
     valueStatement: null,
     showcases: [],
+    interest: null,
     negotiationNotes: null,
+    collaborationAgreement: null,
+    collaborationNotes: null,
+    adoptionAgreement: null,
+    offeringRef: null,
+    reuseNotes: null,
     decision: null,
     credit: null,
     baselinePulls: null,
@@ -177,8 +211,17 @@ export function readToday(candidate: Candidate, now: string): boolean {
 const TEXT_FIELDS = [
   "requestRef",
   "steward",
+  "platform",
+  "discoveryNotes",
+  "flowEvidence",
   "valueStatement",
+  "interest",
   "negotiationNotes",
+  "collaborationAgreement",
+  "collaborationNotes",
+  "adoptionAgreement",
+  "offeringRef",
+  "reuseNotes",
   "decision",
   "credit",
 ] as const;
@@ -207,104 +250,118 @@ export function record(
   return next;
 }
 
-function nextStage(stage: Stage): Stage {
-  return stage === 6 ? 0 : (stage + 1) as Stage;
+function adoptionBlockers(c: Candidate): string[] {
+  const out: string[] = [];
+  if (!c.platform) out.push("Name the adopting platform (platform).");
+  if (!c.steward) out.push("Name the steward (steward).");
+  if (!c.negotiationNotes) {
+    out.push("Record the negotiation notes (negotiationNotes).");
+  }
+  if (!c.collaborationAgreement) {
+    out.push(
+      "Record both parties' agreement to collaborate (collaborationAgreement).",
+    );
+  }
+  if (!c.collaborationNotes) {
+    out.push(
+      "Record trial feedback and the originating team's needs (collaborationNotes).",
+    );
+  }
+  if (!c.adoptionAgreement) {
+    out.push(
+      "Record both parties' adoption agreement and responsibilities (adoptionAgreement).",
+    );
+  }
+  if (!c.credit) out.push("Credit the original author (credit).");
+  if (!c.offeringRef) {
+    out.push(
+      "Link the usable offering, documentation and support route (offeringRef).",
+    );
+  }
+  return out;
 }
 
 /** What stops the candidate moving to `to`. Empty means it may move. */
 export function blockers(candidate: Candidate, to: Stage): string[] {
   const c = candidate;
   const out: string[] = [];
-  const facts = c.facts;
-  if (to !== nextStage(c.stage)) return out;
+  if (c.outcome === "deferred" || c.outcome === "declined") {
+    return [
+      `${c.outcome}: use decide with outcome=active and a reason to resume.`,
+    ];
+  }
+  if (c.stage === 6) {
+    return [
+      "Stage 6 does not restart; keep the agreement and record reuseNotes.",
+    ];
+  }
+  if (to !== c.stage + 1) return ["Move only to the next stage."];
   switch (c.stage) {
     case 0:
       if (!c.requestRef) {
-        out.push("Link the Lab feature request (requestRef).");
+        out.push(
+          "Link the call for capabilities and intended users (requestRef).",
+        );
       }
       break;
-    case 1: {
-      if (c.readings.length < 2) {
-        out.push("Take at least two readings to see pull growth.");
-      } else if (
-        c.readings[c.readings.length - 1].pullCount <=
-          c.readings[0].pullCount
-      ) {
-        out.push("Pulls have not grown between the readings.");
+    case 1:
+      if (!c.discoveryNotes) {
+        out.push(
+          "Record the source team, discovery source and follow-up (discoveryNotes).",
+        );
+      }
+      if (!c.flowEvidence) {
+        out.push("Record a demonstrated improvement to flow (flowEvidence).");
       }
       break;
-    }
     case 2:
-      if (!facts) {
-        out.push("Take a reading so the registry facts are known.");
-      } else {
-        if (!facts.license) out.push("Add a licence to the extension.");
-        if (!facts.repositoryVerified) {
-          out.push("Verify the extension's repository.");
-        }
-        if ((facts.scorePercentage ?? 0) < MIN_SCORE) {
-          out.push(
-            `Raise the quality score to ${MIN_SCORE} or more (now ${
-              facts.scorePercentage ?? "unknown"
-            }).`,
-          );
-        }
-      }
       if (!c.valueStatement) {
-        out.push("Write the value statement (valueStatement).");
+        out.push(
+          "Describe wider value, beneficiaries and incentives to share (valueStatement).",
+        );
       }
       break;
     case 3:
       if (c.showcases.length === 0) {
         out.push("Record where it was shown (showcase).");
       }
-      if (!c.steward) out.push("Name the steward (steward).");
+      if (!c.interest) {
+        out.push("Record prospective buyers and their feedback (interest).");
+      }
       break;
     case 4:
+      if (!c.platform) out.push("Name the adopting platform (platform).");
+      if (!c.steward) out.push("Name the steward (steward).");
       if (!c.negotiationNotes) {
         out.push("Record the negotiation notes (negotiationNotes).");
       }
-      if (!c.decision) {
-        out.push("Record the stewardship decision (decision).");
-      }
-      if (c.readings.length === 0) {
-        out.push("Take a reading to be the 'before' pull count.");
+      if (!c.collaborationAgreement) {
+        out.push(
+          "Record both parties' agreement to collaborate (collaborationAgreement).",
+        );
       }
       break;
     case 5:
-      if (!c.credit) out.push("Credit the original author (credit).");
-      if (!facts?.labels.includes(CORE_LABEL)) {
-        out.push(
-          `Add the '${CORE_LABEL}' label to the extension and publish it.`,
-        );
-      }
-      if (
-        !c.readings.some((r) => r.stage === 5 && r.at > c.stageEnteredAt)
-      ) {
-        out.push(
-          "Take a reading after entering stage 5 for the 'after' pull count.",
-        );
-      }
-      break;
-    case 6:
+      out.push(...adoptionBlockers(c));
       break;
   }
   return out;
 }
 
-/** Move to the next stage (6 loops to 0), or throw saying what blocks it. */
+/** Move through activities 0–5; adoption is an explicit decision, not a label. */
 export function advance(
   candidate: Candidate,
   to: Stage,
   note: string,
   now: string = new Date().toISOString(),
 ): Candidate {
-  if (to !== nextStage(candidate.stage)) {
+  if (candidate.stage === 6 || to !== candidate.stage + 1) {
     throw new Error(
-      `Stage ${candidate.stage} moves only to the next stage, ${
-        nextStage(candidate.stage)
-      }.`,
+      "Move only to the next stage; stage 6 never resets an adoption.",
     );
+  }
+  if (to === 6) {
+    throw new Error("Use decide with outcome=adopted and a reason to adopt.");
   }
   const stops = blockers(candidate, to);
   if (stops.length > 0) {
@@ -328,33 +385,78 @@ export function advance(
   if (to === 5) {
     moved.baselinePulls = candidate.readings.at(-1)?.pullCount ?? null;
   }
-  if (candidate.stage === 6) {
-    return {
-      ...moved,
-      cycle: candidate.cycle + 1,
-      requestRef: null,
-      valueStatement: null,
-      showcases: [],
-      negotiationNotes: null,
-      decision: null,
-      credit: null,
-      baselinePulls: null,
-    };
-  }
   return moved;
+}
+
+/** Defer, decline, resume or adopt without discarding evidence or ownership. */
+export function decide(
+  candidate: Candidate,
+  outcome: Outcome,
+  note: string,
+  now: string = new Date().toISOString(),
+): Candidate {
+  if (!["active", "deferred", "declined", "adopted"].includes(outcome)) {
+    throw new Error("Unknown harvesting outcome.");
+  }
+  if (!note.trim()) throw new Error("A decision needs a reason.");
+  if (candidate.outcome === "adopted") {
+    throw new Error("Keep the adoption agreement; record reuseNotes instead.");
+  }
+  if (outcome === "adopted") {
+    if (candidate.outcome !== "active" || candidate.stage < 5) {
+      throw new Error(
+        "Adoption needs an active candidate at stage 5 (or legacy stage 6).",
+      );
+    }
+    const stops = adoptionBlockers(candidate);
+    if (stops.length > 0) {
+      throw new Error(`Cannot adopt:\n- ${stops.join("\n- ")}`);
+    }
+  }
+  const adopting = outcome === "adopted" && candidate.stage === 5;
+  return {
+    ...candidate,
+    outcome,
+    decision: note.trim(),
+    decisions: [...candidate.decisions, {
+      outcome,
+      note: note.trim(),
+      at: now,
+    }],
+    stage: adopting ? 6 : candidate.stage,
+    stageEnteredAt: adopting ? now : candidate.stageEnteredAt,
+    history: adopting
+      ? [...candidate.history, { from: 5, to: 6, at: now, note: note.trim() }]
+      : candidate.history,
+  };
 }
 
 /** Things worth a person's attention that are not blockers. */
 export function flags(candidate: Candidate): string[] {
   const out: string[] = [];
-  const labels = candidate.facts?.labels;
-  if (labels?.includes(CORE_LABEL) && !candidate.decision) {
+  const facts = candidate.facts;
+  if (facts?.labels.includes(CORE_LABEL) && candidate.outcome !== "adopted") {
     out.push(
-      `Has the '${CORE_LABEL}' label but no stewardship decision is recorded.`,
+      `Has the '${CORE_LABEL}' label but no explicit adoption is recorded.`,
     );
   }
-  if (candidate.stage === 6 && labels && !labels.includes(CORE_LABEL)) {
-    out.push(`At stage 6 but the '${CORE_LABEL}' label is missing.`);
+  if (candidate.stage === 6 && candidate.outcome !== "adopted") {
+    out.push(
+      "Legacy stage 6: review the agreement before recording adoption with decide.",
+    );
+  }
+  if (facts) {
+    if (!facts.license) {
+      out.push("Readiness: review the missing licence before reuse.");
+    }
+    if (!facts.repositoryVerified) {
+      out.push("Readiness: the repository is not verified.");
+    }
+    if ((facts.scorePercentage ?? 0) < MIN_SCORE) {
+      out.push(
+        `Readiness: quality score is below the local guideline of ${MIN_SCORE}.`,
+      );
+    }
   }
   return out;
 }
