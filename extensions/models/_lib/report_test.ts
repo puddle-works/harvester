@@ -154,3 +154,55 @@ Deno.test("reports list calls, including unanswered ones, even with nothing trac
   );
   assert(!renderReport([answering], T1).includes("Calls for capabilities"));
 });
+
+Deno.test("wave keeps outcomes at recorded stages, open calls at zero, and untracked names off the wave", () => {
+  const candidates = [
+    { ...newCandidate("@a/trial"), stage: 5 as const },
+    decide(
+      { ...newCandidate("@a/later"), stage: 3 as const },
+      "deferred",
+      "Next quarter",
+    ),
+    decide(
+      { ...newCandidate("@a/no"), stage: 2 as const },
+      "declined",
+      "Wrong fit",
+    ),
+  ];
+  const calls = [
+    openCall({}, "audit", "Evidence", "Security", T0),
+    {
+      ...openCall({}, "closed", "Old need", "Tools", T0),
+      closedAt: T1,
+      closeNote: "Met",
+    },
+  ];
+  const inventory = {
+    collectives: ["a"],
+    extensions: ["@a/trial", "@a/<new>", "@a/<new>"],
+    complete: true,
+  };
+  const html = renderReportHtml(candidates, T1, calls, inventory);
+  const wave = html.slice(
+    html.indexOf('<section id="wave"'),
+    html.indexOf('<section class="untracked"'),
+  );
+  const stage = (n: number) =>
+    wave.split(`data-stage="${n}"`)[1].split("data-stage=")[0];
+  assert(stage(0).includes('href="#call-0"'));
+  assert(!wave.includes('href="#call-1"'));
+  assert(
+    stage(2).includes('href="#extension-2"') && stage(2).includes("Declined"),
+  );
+  assert(
+    stage(3).includes('href="#extension-1"') && stage(3).includes("Deferred"),
+  );
+  assert(stage(5).includes('href="#extension-0"'));
+  assert(!stage(6).includes('href="#extension-0"'));
+  assert(!wave.includes("&lt;new&gt;"));
+  assert(html.includes("Not yet tracked · 1"));
+  assert(html.includes("@a/&lt;new&gt;") && !html.includes("@a/<new>"));
+  assert(html.includes("local interpretation"));
+  assert(html.includes("<strong>4</strong>extensions"));
+  assertEquals((wave.match(/href="#extension-/g) ?? []).length, 3);
+});

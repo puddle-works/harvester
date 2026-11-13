@@ -75,9 +75,11 @@ account; no email or name is stored. A collective token works too: it has no
 username, so its own collective is used.
 
 Harvester reads the registry by running `swamp auth whoami` and
-`swamp extension info` as subprocesses, so `swamp` must be on your `PATH`. Those
-are the only commands it runs, and extension names must match `@collective/name`
-before they are passed to one.
+`swamp extension info` as subprocesses, so `swamp` must be on your `PATH`.
+`report` also runs `swamp extension search --collective <own-collective>`:
+one listing per collective, with pages of 100 when needed, not an info request
+per untracked extension. Those are the only commands it runs. Tracked extension
+names must match `@collective/name` before they are passed to one.
 
 Pull the extension and create its model once:
 
@@ -106,12 +108,50 @@ The commands illustrate separate actions, not a complete walkthrough: record
 the table's evidence before advancing or adopting. The steward has no default;
 it must be agreed before leaving stage 4.
 
-`report` writes two files: a markdown report and an HTML page with the calls for
-capabilities and a stage track per extension. Ready means the evidence supports
-the next activity or decision, not an obligation to adopt. Deferred, declined
-and adopted records are shown separately from candidates waiting for evidence.
+`report` writes two files: markdown (`report`, instance `weekly`) and HTML
+(`reportHtml`, instance `weekly-html`). The distinct names avoid a data-instance
+collision in current Swamp; consumers of the old HTML instance `weekly` should
+switch to `weekly-html`.
+
+The HTML report redraws Skelton's diagram: his legend on the left, and the
+loop from 0 at the bottom left, up to 1 and 2, down through 3 to 5 on the right,
+and back along the bottom through 6 to 0. Each stage lists its tracked extensions
+by name, with a coloured edge and a status word. Open calls sit at stage 0.
+Deferred and declined extensions remain at their stage with explicit labels;
+stage 6 is labelled as the local interpretation. A stage with more than five
+names folds the rest into "+N more". The team and platform bands are the
+diagram's context only; Harvester does not record which team or platform an
+extension belongs to. Select a name to jump to its evidence or decision notes.
+Screens narrower than 1280 px use a vertical stage list with the legend text
+under each stage.
+
+All other extensions in your own collectives appear under **Not yet tracked**,
+outside the wave, without an inferred stage. No registry result is automatically
+tracked. Totals include the union of registry listings and tracked records,
+including tracked extensions no longer listed. Membership is checked on each
+report; tracked records outside current collectives are omitted, not deleted.
+If a listing fails, the report shows scoped tracked records with an explicit
+unknown inventory count. If identity cannot be verified, reporting fails without
+writing new reports. Calls are local records, not a collective registry search.
+
+Ready means the evidence supports the next activity or decision, not an obligation
+to adopt. Registry pull counts remain supporting context only.
 
 A second `refresh` on the same UTC day adds no reading, so a rerun is safe.
+
+### Preview with synthetic data
+
+`examples/preview.ts` serves the real HTML renderer with 19 fictional extensions
+across two fictional collectives. It never reads the registry or writes tracking
+data. Its scenario links cover every stage and outcome, four tracked extensions,
+no tracked extensions, inventory failure and a crowded stage.
+
+```sh
+DENO=$(swamp doctor extensions --json | jq -r '.denoPath')
+"$DENO" run --allow-env=PORT --allow-net examples/preview.ts
+```
+
+The server listens on port 8000 by default; set `PORT` to change it.
 
 ## Reaching an owner
 

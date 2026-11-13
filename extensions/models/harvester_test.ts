@@ -26,6 +26,7 @@ function registry(pulls = 40): RegistryPort {
   return {
     whoami: () => Promise.resolve({ username: "ada", collectives: ["acme"] }),
     info: () => Promise.resolve({ ...facts, pullCount: pulls }),
+    list: () => Promise.resolve(["@acme/tool", "@acme/untracked"]),
   };
 }
 
@@ -288,7 +289,7 @@ Deno.test("old stage 6 data retains its evidence without inferring adoption", as
   const first = createModelTestContext({
     storedResources: { candidates: { candidates: { "@acme/tool": legacy } } },
   });
-  await model.methods.report.execute({}, first.context);
+  await model.methods.report.execute({ _registry: registry() }, first.context);
   assert(first.getWrittenFiles()[0].text?.includes("Legacy stage 6"));
   await assertRejects(
     () =>
@@ -379,7 +380,7 @@ Deno.test("a call is stored, answered, reported and closed", async () => {
     { extension: "@acme/tool", to: 1, note: "answers the call" },
     third.context,
   );
-  await model.methods.report.execute({}, third.context);
+  await model.methods.report.execute({ _registry: registry() }, third.context);
   const md = third.getWrittenFiles()[0].text ?? "";
   assert(md.includes("Answered by @acme/tool"));
   await model.methods.closeCall.execute(
@@ -406,13 +407,99 @@ Deno.test("report writes a markdown file", async () => {
       candidates: { candidates: { "@acme/tool": newCandidate("@acme/tool") } },
     },
   });
-  await model.methods.report.execute({}, context);
+  await model.methods.report.execute({ _registry: registry() }, context);
   const f = getWrittenFiles()[0];
   assertEquals(f.specName, "report");
   assert(f.text?.includes("@acme/tool"));
   const h = getWrittenFiles()[1];
   assertEquals(h.specName, "reportHtml");
   assert(h.text?.includes("<!doctype html>") && h.text.includes("@acme/tool"));
+  assertEquals(getWrittenFiles().map((file) => file.name), [
+    "weekly",
+    "weekly-html",
+  ]);
+});
+
+Deno.test("report includes all own collectives without tracking registry entries or leaking other collectives", async () => {
+  const original = {
+    "@acme/tool": newCandidate("@acme/tool"),
+    "@acme/unlisted": newCandidate("@acme/unlisted"),
+    "@outsider/private": newCandidate("@outsider/private"),
+  };
+  const { context, getWrittenFiles, getWrittenResources } =
+    createModelTestContext({
+      storedResources: { candidates: { candidates: original } },
+    });
+  const reg = registry();
+  reg.whoami = () =>
+    Promise.resolve({ username: "ada", collectives: ["acme", "other-owned"] });
+  reg.list = (collective) =>
+    Promise.resolve(
+      collective === "acme"
+        ? [
+          "@acme/tool",
+          "@acme/untracked",
+          "@acme/untracked",
+          "@acme/cloud/nested",
+          "@acme-extra/no",
+          "@outsider/no",
+        ]
+        : ["@other-owned/another"],
+    );
+  await model.methods.report.execute({ _registry: reg }, context);
+  const [markdown, html] = getWrittenFiles().map((file) => file.text!);
+  for (const text of [markdown, html]) {
+    for (
+      const name of [
+        "@acme/tool",
+        "@acme/unlisted",
+        "@acme/untracked",
+        "@acme/cloud/nested",
+        "@other-owned/another",
+      ]
+    ) assert(text.includes(name));
+    assert(!text.includes("@outsider"));
+    assert(!text.includes("@acme-extra"));
+  }
+  assert(markdown.includes("Not yet tracked (3)"));
+  assert(html.includes("<strong>5</strong>extensions"));
+  assertEquals(getWrittenResources(), []);
+  assertEquals(original["@acme/tool"].stage, 1);
+});
+
+Deno.test("report distinguishes failed inventory from empty membership and fails closed on identity errors", async () => {
+  const setup = () =>
+    createModelTestContext({
+      storedResources: {
+        candidates: {
+          candidates: { "@acme/tool": newCandidate("@acme/tool") },
+        },
+      },
+    });
+  const reg = registry();
+  reg.list = () => Promise.reject(new Error("Offline"));
+  const offline = setup();
+  await model.methods.report.execute({ _registry: reg }, offline.context);
+  for (const file of offline.getWrittenFiles()) {
+    assert(file.text?.includes("untracked count is unknown"));
+    assert(file.text?.includes("@acme/tool"));
+  }
+  reg.whoami = () => Promise.resolve({ username: "ada", collectives: [] });
+  const empty = setup();
+  await model.methods.report.execute({ _registry: reg }, empty.context);
+  for (const file of empty.getWrittenFiles()) {
+    assert(file.text?.includes("no collectives"));
+    assert(!file.text?.includes("@acme/tool"));
+    assert(!file.text?.includes("inventory unavailable"));
+  }
+  reg.whoami = () => Promise.reject(new Error("Sign in required"));
+  const anonymous = setup();
+  await assertRejects(
+    () => model.methods.report.execute({ _registry: reg }, anonymous.context),
+    Error,
+    "Sign in required",
+  );
+  assertEquals(anonymous.getWrittenFiles(), []);
 });
 
 Deno.test("the current version has an upgrade that keeps the arguments", () => {

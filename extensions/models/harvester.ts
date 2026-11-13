@@ -21,6 +21,7 @@ import {
   type Candidate,
   type CapabilityCall,
   closeCall,
+  collectiveOf,
   decide,
   newCandidate,
   openCall,
@@ -32,7 +33,11 @@ import {
   type RegistryFacts,
   type Stage,
 } from "./_lib/harvest.ts";
-import { renderReport, renderReportHtml } from "./_lib/report.ts";
+import {
+  type CollectiveInventory,
+  renderReport,
+  renderReportHtml,
+} from "./_lib/report.ts";
 
 /** The model takes no settings. */
 export const GlobalArgsSchema = z.object({});
@@ -112,6 +117,7 @@ export const CandidatesSchema = z.object({
 export interface RegistryPort {
   whoami(): Promise<{ username: string; collectives: string[] }>;
   info(extension: string): Promise<RegistryFacts>;
+  list(collective: string): Promise<string[]>;
 }
 
 async function swampJson(args: string[]): Promise<Record<string, unknown>> {
@@ -133,6 +139,37 @@ export const swampRegistry: RegistryPort = {
   whoami: async () => parseWhoami(await swampJson(["auth", "whoami"])),
   info: async (extension) =>
     parseInfo(await swampJson(["extension", "info", extension])),
+  list: async (collective) => {
+    // The name becomes a subprocess argument; refuse anything but a slug.
+    if (!/^[a-z0-9][a-z0-9_-]*$/i.test(collective)) {
+      throw new Error(`'${collective}' is not a collective name.`);
+    }
+    const names = new Set<string>();
+    const schema = z.object({
+      extensions: z.array(z.object({ name: z.string() })),
+      meta: z.object({ total: z.number().int().nonnegative() }),
+    });
+    for (let page = 1;; page++) {
+      const result = schema.parse(
+        await swampJson([
+          "extension",
+          "search",
+          "--collective",
+          collective,
+          "--per-page",
+          "100",
+          "--page",
+          String(page),
+        ]),
+      );
+      const before = names.size;
+      for (const extension of result.extensions) names.add(extension.name);
+      if (names.size >= result.meta.total) return [...names];
+      if (names.size === before) {
+        throw new Error("Incomplete collective listing");
+      }
+    }
+  },
 };
 
 interface Ctx {
@@ -180,7 +217,7 @@ const Registry = z.any().optional().describe("Test hook: a registry stub.");
 /** The model type. */
 export const model = {
   type: "@puddleworks/harvester",
-  version: "2026.11.12.1",
+  version: "2026.11.13.1",
   globalArguments: GlobalArgsSchema,
   upgrades: [
     {
@@ -204,6 +241,12 @@ export const model = {
         "Adds calls for capabilities, negotiated adoption evidence and outcomes. Existing resource evidence is preserved; missing fields default on read without inferring adoption.",
       upgradeAttributes: (old: Record<string, unknown>) => old,
     },
+    {
+      toVersion: "2026.11.13.1",
+      description:
+        "Adds the collective harvesting wave and untracked inventory. Stored evidence is unchanged. HTML reports now use the distinct weekly-html instance name.",
+      upgradeAttributes: (old: Record<string, unknown>) => old,
+    },
   ],
   resources: {
     candidates: {
@@ -222,7 +265,8 @@ export const model = {
       garbageCollection: 52,
     },
     reportHtml: {
-      description: "The weekly stage report as a page with a stage track.",
+      description:
+        "The collective harvesting wave and evidence as an HTML page.",
       contentType: "text/html",
       lifetime: "infinite" as const,
       garbageCollection: 52,
@@ -483,20 +527,51 @@ export const model = {
     },
     report: {
       description:
-        "Write the markdown and HTML reports of every tracked extension.",
-      arguments: z.object({}),
-      execute: async (_args: Record<string, never>, context: Ctx) => {
+        "Write markdown and HTML reports for your own collectives, including untracked registry extensions. Reads one registry listing per collective (paginated above 100); never starts tracking automatically.",
+      arguments: z.object({ _registry: Registry }),
+      execute: async (args: { _registry?: RegistryPort }, context: Ctx) => {
+        const reg = args._registry ?? swampRegistry;
+        // Authenticate before rendering: an old tracked record must not expose
+        // extensions from a collective the runner no longer belongs to.
+        const who = await reg.whoami();
+        const collectives = [
+          ...new Set(who.collectives.map((c) => c.toLowerCase())),
+        ];
         const state = await load(context);
-        const store = state.candidates;
-        const candidates = Object.values(store);
+        const candidates = Object.values(state.candidates).filter((c) =>
+          collectives.includes(collectiveOf(c.extension))
+        );
         const calls = Object.values(state.calls);
+        const inventory: CollectiveInventory = {
+          collectives,
+          extensions: [],
+          complete: true,
+        };
+        try {
+          for (const collective of collectives) {
+            const names = await reg.list(collective);
+            // Scope locally too; do not trust a search result's prefix match.
+            inventory.extensions.push(
+              ...names.filter((name) =>
+                name.toLowerCase().startsWith(`@${collective}/`)
+              ),
+            );
+          }
+        } catch (error) {
+          inventory.extensions = [];
+          inventory.complete = false;
+          context.logger.warn(
+            "Collective inventory unavailable ({error}); reporting scoped tracked extensions only",
+            { error: error instanceof Error ? error.message : String(error) },
+          );
+        }
         const now = new Date().toISOString();
         // Render both before writing either, so a failure writes neither.
-        const markdown = renderReport(candidates, now, calls);
-        const page = renderReportHtml(candidates, now, calls);
+        const markdown = renderReport(candidates, now, calls, inventory);
+        const page = renderReportHtml(candidates, now, calls, inventory);
         const md = await context.createFileWriter("report", "weekly")
           .writeText(markdown);
-        const html = await context.createFileWriter("reportHtml", "weekly")
+        const html = await context.createFileWriter("reportHtml", "weekly-html")
           .writeText(page);
         context.logger.info(
           "Wrote the report: {extensions} extension(s), {calls} call(s)",
