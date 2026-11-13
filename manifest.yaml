@@ -1,6 +1,6 @@
 manifestVersion: 1
 name: "@puddleworks/harvester"
-version: "2026.11.12.1"
+version: "2026.11.13.1"
 description: "Records evidence for Matthew Skelton's harvesting activities, negotiated adoption decisions and voluntary reuse, with weekly pull readings as supporting context."
 labels:
   - harvesting
