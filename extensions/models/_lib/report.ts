@@ -234,25 +234,40 @@ a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
 .summary span{color:var(--text2);font-size:12px}
 .scope{font-size:12px;color:var(--text2);margin-bottom:18px;max-width:900px}
 .notice{border-left:3px solid var(--warn);padding:10px 14px;background:rgba(252,211,77,.06)}
-.phases{display:grid;grid-template-columns:3fr 3fr 1fr;gap:16px;margin-top:24px}
-.phases span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);padding:10px 0;border-top:1px solid var(--border2)}
-.phases span:last-child{color:#c4b5fd}
-.wave{position:relative;margin:12px 0 24px}
-.wave-line{position:absolute;top:0;left:0;width:100%;height:300px;pointer-events:none}
-.stages{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;list-style:none;padding:0;margin:0}
-.stage{position:relative;padding-top:var(--rise);margin:0;min-width:0}
-.stage-head{text-align:center;color:var(--text);margin-bottom:12px}
-.stage-number{display:flex;align-items:center;justify-content:center;width:34px;height:34px;margin:0 auto 10px;border:1px solid var(--accent);border-radius:50%;background:var(--bg);color:var(--accent);font-size:15px}
-.stage:last-child .stage-number{border-color:#c4b5fd;color:#c4b5fd;border-style:dashed}
-.stage h3{font-size:13px;font-weight:500;line-height:1.35;min-height:36px}
-.stage-count{display:block;font-size:11px;color:var(--text2);margin-top:6px}
-.stage-items{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.harvest{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:start;margin:8px 0 16px}
+.legend-title{font-size:15px;font-weight:600;line-height:1.3;margin-bottom:14px}
+.legend{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.legend li{margin:0;padding:10px 12px;font-size:12px;line-height:1.4;color:var(--text2);background:#232a3d;border-radius:4px;box-shadow:0 4px 8px rgba(0,0,0,.35)}
+.legend b{color:var(--text);font-weight:600}
+.legend li:last-child{border:1px dashed #6d5fa8;background:none;box-shadow:none}
+.flow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--text2);margin:0 0 6px 22%}
+.flow i{flex:0 0 220px;border-top:1px dashed var(--text3);position:relative}
+.flow i::after{content:"";position:absolute;right:-2px;top:-6px;border:6px solid transparent;border-left-color:var(--text3)}
+.canvas{position:relative;aspect-ratio:1000/770}
+.canvas svg{position:absolute;inset:0;width:100%;height:100%}
+.bg-group{fill:none;stroke:rgba(252,211,77,.28);stroke-width:3;stroke-dasharray:14 10}
+.bg-platform{fill:rgba(120,150,220,.07);stroke:rgba(120,150,220,.18)}
+.bg-label{fill:rgba(232,236,241,.24);font:13px Inter,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+.flow-path{fill:none;stroke:var(--accent);stroke-width:2}
+.flow-path.back{stroke:#c4b5fd}
+.stages{list-style:none;padding:0;margin:0}
+.stage{position:absolute;left:calc(var(--x) * .1%);top:calc(var(--y) * 1% / 7.7);width:19%;margin:0;padding:6px 6px 8px;background:rgba(15,18,25,.88);border-radius:6px}
+.stage:has(details[open]),.stage:focus-within{z-index:2}
+.stage-head{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;color:var(--text)}
+.stage-number{flex:0 0 26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;background:#e8ecf1;color:#0f1219;font-size:13px;font-weight:600}
+.stage:last-child .stage-number{background:#c4b5fd}
+.stage h3{font-size:12px;font-weight:500;line-height:1.3}
+.stage-count{display:block;font-size:10px;color:var(--text2)}
+.stage-desc{display:none}
+.stage-items{list-style:none;padding:0 0 0 34px;margin:0;display:grid;gap:2px}
 .stage-items li{margin:0}
-.wave-item{display:block;padding:10px;border:1px solid var(--border2);border-radius:8px;background:var(--card);text-decoration:none;color:var(--text);overflow-wrap:anywhere}
-.wave-item:hover{border-color:var(--accent);background:#242e43}
-.wave-item .collective{display:block;font-size:10px;color:var(--text2);font-weight:400}
-.wave-item strong{font-size:12px;font-weight:500}
-.wave-status{display:block;font-size:10px;color:var(--text2);margin-top:6px}
+.stage-more summary{cursor:pointer;font-size:11px;color:var(--accent);margin:2px 0 0 34px}
+.stage-more .stage-items{margin-top:2px}
+.wave-item{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 6px;padding:1px 0 1px 7px;border-left:3px solid var(--text3);text-decoration:none;color:var(--text);line-height:1.35}
+.wave-item:hover strong{text-decoration:underline;text-underline-offset:3px}
+.wave-item .collective{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.wave-item strong{font-size:12px;font-weight:500;min-width:0}
+.wave-status{flex:none;margin-left:auto;font-size:10px;color:var(--text2)}
 .wave-item.ready{border-left:3px solid var(--accent)}
 .wave-item.ready .wave-status{color:var(--accent)}
 .wave-item.deferred{border-left:3px solid var(--warn)}
@@ -261,8 +276,8 @@ a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
 .wave-item.declined .wave-status{color:#fda4af}
 .wave-item.adopted{border-left:3px solid #c4b5fd}
 .wave-item.adopted .wave-status{color:#c4b5fd}
-.wave-item.call{border-style:dashed}
-.stage-empty{font-size:11px;color:var(--text2);text-align:center;border:1px dashed var(--border2);border-radius:8px;padding:12px 4px}
+.wave-item.call{border-left-style:dashed}
+.stage-empty{font-size:11px;color:var(--text2);padding-left:34px}
 .wave-caption{font-size:12px;color:var(--text2);max-width:980px}
 .untracked{border:1px dashed var(--border2);border-radius:12px;padding:20px;margin:24px 0 32px}
 .untracked h2{margin:0 0 6px;color:var(--text);font-size:14px;letter-spacing:0;text-transform:none}
@@ -273,22 +288,28 @@ a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
 .card[id]{scroll-margin-top:24px}
 .card:target{border-color:var(--accent);outline:1px solid var(--accent)}
 .back{display:inline-block;font-size:12px;margin-top:10px}
+@media(max-width:1279px){
+.harvest{display:block}
+.legend-col,.flow,.canvas svg{display:none}
+.canvas{aspect-ratio:auto}
+.stages{border-left:2px solid #345660;margin:24px 0 0 17px;padding-left:28px}
+.stage{position:static;width:auto;padding:0 0 28px;background:none;border:0;box-shadow:none}
+.stage-head{display:block;position:relative;margin-bottom:4px}
+.stage-number{position:absolute;left:-46px;top:0;width:34px;height:34px;border-radius:50%;font-size:15px}
+.stage h3{padding-top:5px;font-size:15px}
+.stage-count{margin-top:2px;font-size:11px}
+.stage-desc{display:block;font-size:12px;color:var(--text2);margin-bottom:10px;max-width:640px}
+.stage-items{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;padding:0}
+.stage-more summary{margin-left:0}
+.stage-empty{padding:0}
+.wave-item{display:block;padding:4px 0 4px 10px}
+.wave-item .collective{position:static;width:auto;height:auto;clip:auto;display:block;font-size:10px;color:var(--text2)}
+.wave-item strong{font-size:13px}
+.wave-status{display:block;font-size:12px;margin-top:4px}
+.stage:last-child{padding-bottom:0}
+}
 @media(max-width:1000px){
 main{padding:24px 20px 48px}
-.phases{display:none}
-.wave-line{display:none}
-.stages{display:block;border-left:2px solid #345660;margin:24px 0 0 17px;padding-left:28px}
-.stage{padding:0 0 28px}
-.stage-head{text-align:left;position:relative;margin-bottom:10px}
-.stage-number{position:absolute;left:-46px;top:0;margin:0}
-.stage h3{min-height:0;padding-top:5px;font-size:15px}
-.stage-count{margin-top:4px}
-.stage-items{grid-template-columns:repeat(2,minmax(0,1fr))}
-.stage-empty{text-align:left}
-.wave-item{padding:12px}
-.wave-item strong{font-size:13px}
-.wave-status{font-size:12px}
-.stage:last-child{padding-bottom:0}
 }
 @media(max-width:480px){
 header{padding:0 20px}
@@ -312,8 +333,57 @@ function waveName(name: string): string {
   }</span><strong>${escapeHtml(name.slice(slash))}</strong>`;
 }
 
+/** Skelton's legend for 0–5 (printed page 69). Node 6 has none there. */
+const LEGEND = [
+  "Core platform areas post calls for key capabilities needed.",
+  "A product area (grouping) develops a capability that enhances flow: a candidate for sharing.",
+  "The product area defines the value proposition in terms of wider organisational value, with incentives to share.",
+  "Showcase the offering to find “buyers”.",
+  "Core platform areas reach out to negotiate stewardship.",
+  "A period of collaboration and possible adoption: value recognised and attributed back to the original grouping.",
+  "Harvester’s local interpretation: adopted by agreement and offered for voluntary use. Skelton’s legend has no entry for 6.",
+];
+
+/**
+ * Where each stage sits on a 1000 × 770 canvas, after the diagram: 0 at the
+ * bottom left, 1 and 2 high up, 3 to 5 stepping down on the right, and 6 at
+ * the bottom with the loop back to 0. Arrows meet each card 20 units below
+ * its top, beside its number, so a card's height never moves them.
+ */
+const NODES = [
+  [20, 470],
+  [330, 30],
+  [560, 60],
+  [790, 215],
+  [520, 320],
+  [790, 540],
+  [540, 560],
+];
+const FLOW = [
+  "M210 490 C290 490 250 50 324 50",
+  "M520 50 C540 50 536 80 554 80",
+  "M750 80 C860 80 885 120 885 209",
+  "M790 235 C680 235 615 250 615 314",
+  "M710 340 C800 340 885 460 885 534",
+  "M790 560 C765 560 760 580 736 580",
+];
+const LOOP =
+  "M540 580 C495 580 500 748 410 748 L70 748 C25 748 8 725 8 650 L8 530 C8 500 10 490 14 490";
+const BACKGROUND =
+  `<rect class="bg-group" x="40" y="10" width="950" height="195" rx="18"/>` +
+  `<text class="bg-label" x="62" y="36">Customer-facing teams (stream-aligned)</text>` +
+  `<rect class="bg-platform" x="780" y="25" width="200" height="90" rx="4"/>` +
+  `<text class="bg-label" x="880" y="62" text-anchor="middle">Specific platform</text>` +
+  `<rect class="bg-group" x="40" y="215" width="950" height="175" rx="18"/>` +
+  `<text class="bg-label" x="62" y="242">Customer-facing teams (stream-aligned)</text>` +
+  `<rect class="bg-platform" x="240" y="405" width="250" height="80" rx="4"/>` +
+  `<text class="bg-label" x="365" y="450" text-anchor="middle">Higher-level platform</text>` +
+  `<rect class="bg-platform" x="40" y="510" width="950" height="250" rx="4"/>` +
+  `<text class="bg-label" x="300" y="540" text-anchor="middle">Lower-level platform</text>`;
+/** Items shown on a stage card before the rest fold into "+N more". */
+const SHOWN = 5;
+
 function renderWave(candidates: Candidate[], calls: CapabilityCall[]): string {
-  const rises = [208, 88, 16, 48, 128, 208, 240];
   const open = calls.filter((call) => !call.closedAt);
   const stages = STAGE_NAMES.map((name, stage) => {
     const here = candidates.filter((c) => c.stage === stage);
@@ -330,6 +400,8 @@ function renderWave(candidates: Candidate[], calls: CapabilityCall[]): string {
         ...open.map((call) =>
           `<li><a class="wave-item call" href="#call-${
             calls.indexOf(call)
+          }" title="Open call from ${
+            escapeHtml(call.platform)
           }"><span class="collective">Open call · ${
             escapeHtml(call.platform)
           }</span><strong>${
@@ -345,22 +417,45 @@ function renderWave(candidates: Candidate[], calls: CapabilityCall[]): string {
         ? ` · ${open.length} open call${open.length === 1 ? "" : "s"}`
         : ""
     }`;
-    return `<li class="stage" style="--rise:${
-      rises[stage]
-    }px" data-stage="${stage}"><div class="stage-head"><span class="stage-number">${stage}</span><h3>${name}</h3><span class="stage-count">${count}</span></div>${
-      items.length
-        ? `<ul class="stage-items">${items.join("")}</ul>`
-        : `<p class="stage-empty">Nothing here yet</p>`
-    }</li>`;
+    const [x, y] = NODES[stage];
+    const more = items.slice(SHOWN);
+    const list = items.length === 0
+      ? `<p class="stage-empty">Nothing here yet</p>`
+      : `<ul class="stage-items">${items.slice(0, SHOWN).join("")}</ul>` +
+        (more.length
+          ? `<details class="stage-more"><summary>+${more.length} more</summary><ul class="stage-items">${
+            more.join("")
+          }</ul></details>`
+          : "");
+    return `<li class="stage" style="--x:${x};--y:${y}" data-stage="${stage}"><div class="stage-head"><span class="stage-number">${stage}</span><div><h3>${name}</h3><span class="stage-count">${count}</span></div></div><p class="stage-desc">${
+      LEGEND[stage]
+    }</p>${list}</li>`;
   }).join("");
+  const arrow = (id: string, color: string) =>
+    `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="${color}"/></marker>`;
   return `<section id="wave" tabindex="-1" aria-label="Harvesting wave">
-    <div class="phases" aria-hidden="true"><span>Foraging · discover wider value</span><span>Harvesting · find a shared home</span><span>Re-commoning</span></div>
-    <div class="wave"><svg class="wave-line" viewBox="0 0 1400 300" preserveAspectRatio="none" fill="none" aria-hidden="true">
-      <defs><linearGradient id="wave-color"><stop stop-color="#5ec4d4"/><stop offset=".75" stop-color="#5ec4d4"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient></defs>
-      <path d="M100 225 C185 225 220 105 300 105 S420 33 500 33 S620 65 700 65 S820 145 900 145 S1020 225 1100 225 S1220 257 1300 257" stroke="url(#wave-color)" stroke-width="2"/>
-      <path d="M100 225 C185 225 220 105 300 105 S420 33 500 33 S620 65 700 65 S820 145 900 145 S1020 225 1100 225 S1220 257 1300 257" stroke="url(#wave-color)" stroke-width="18" opacity=".04"/>
-    </svg><ol class="stages">${stages}</ol></div>
-    <p class="wave-caption">Select an extension or call for its evidence below. Deferred and declined extensions stay at their recorded stage; adoption is optional. Stage 6 is Harvester’s local interpretation, not a stage defined in Skelton’s legend. New discovery does not reset an adopted extension.</p>
+    <div class="harvest">
+      <div class="legend-col"><p class="legend-title">Learning and sharing dynamics: harvesting</p>
+        <ol class="legend">${
+    LEGEND.map((text, i) => `<li><b>${i}</b> · ${text}</li>`).join("")
+  }</ol></div>
+      <div><p class="flow" aria-hidden="true">Flow of value <i></i></p>
+        <div class="canvas"><svg viewBox="0 0 1000 770" aria-hidden="true">
+          <defs>${arrow("arrow", "#5ec4d4")}${
+    arrow("arrow-back", "#c4b5fd")
+  }</defs>
+          ${BACKGROUND}
+          ${
+    FLOW.map((d) =>
+      `<path class="flow-path" d="${d}" marker-end="url(#arrow)"/>`
+    )
+      .join("")
+  }
+          <path class="flow-path back" d="${LOOP}" marker-end="url(#arrow-back)"/>
+        </svg><ol class="stages">${stages}</ol></div>
+      </div>
+    </div>
+    <p class="wave-caption">After Matthew Skelton’s harvesting diagram (Conflux 2024). The team and platform bands are the diagram’s context only: Harvester does not record which team or platform an extension belongs to. Select an extension or call for its evidence below. Deferred and declined extensions stay at their recorded stage; adoption is optional. New discovery does not reset an adopted extension.</p>
   </section>`;
 }
 

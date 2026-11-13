@@ -113,12 +113,17 @@ it must be agreed before leaving stage 4.
 collision in current Swamp; consumers of the old HTML instance `weekly` should
 switch to `weekly-html`.
 
-The HTML report follows the rising and falling shape of Skelton's diagram.
-Every tracked extension sits at its recorded stage, with open calls at stage 0.
+The HTML report redraws Skelton's diagram: his legend on the left, and the
+loop from 0 at the bottom left, up to 1 and 2, down through 3 to 5 on the right,
+and back along the bottom through 6 to 0. Each stage lists its tracked extensions
+by name, with a coloured edge and a status word. Open calls sit at stage 0.
 Deferred and declined extensions remain at their stage with explicit labels;
-stage 6 is labelled as the local interpretation. Select a card to jump to its
-evidence or decision notes. Narrow screens use a vertical stage list rather
-than squeezing seven columns into a phone width.
+stage 6 is labelled as the local interpretation. A stage with more than five
+names folds the rest into "+N more". The team and platform bands are the
+diagram's context only; Harvester does not record which team or platform an
+extension belongs to. Select a name to jump to its evidence or decision notes.
+Screens narrower than 1280 px use a vertical stage list with the legend text
+under each stage.
 
 All other extensions in your own collectives appear under **Not yet tracked**,
 outside the wave, without an inferred stage. No registry result is automatically
