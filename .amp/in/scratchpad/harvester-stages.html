@@ -1,0 +1,254 @@
+<div class="ui-header">
+	<p class="ui-title">
+		A capability is adopted only once an inspection, both teams' agreement, credit and a usable
+		offering are recorded
+	</p>
+	<p class="ui-sub">
+		Harvester's stages on branch skelton-mismatches-1-7. A person makes every move. Select a stage
+		for the evidence it needs.
+	</p>
+</div>
+<svg id="flow" width="100%" role="group" aria-label="Harvester stages"></svg>
+<div id="detail" style="margin-top: 12px; max-width: 65ch"></div>
+<style>
+	#flow {
+		display: block;
+		overflow: visible;
+	}
+	#flow text {
+		font-size: 12px;
+		fill: var(--foreground);
+	}
+	#flow text.sub,
+	#flow text.edge {
+		font-size: 11px;
+		fill: var(--muted-foreground);
+	}
+	#flow .halo {
+		paint-order: stroke;
+		stroke: var(--background);
+		stroke-width: 3px;
+	}
+	#flow g.node {
+		cursor: pointer;
+		outline: none;
+	}
+	#flow g.node:focus-visible rect {
+		stroke: var(--link);
+		stroke-width: 2;
+	}
+	@media (hover: hover) {
+		#flow g.node:hover rect {
+			fill: var(--muted);
+		}
+	}
+	#detail p {
+		margin: 0;
+		text-wrap: pretty;
+	}
+</style>
+<script>
+	{
+		const main = ['call', 'candidate', 'value', 'showcase', 'negotiate', 'trial', 'adopted']
+		const nodes = {
+			call: { label: 'Call', sub: 'stage 0' },
+			candidate: { label: 'Candidate', sub: 'stage 1' },
+			value: { label: 'Value', sub: 'stage 2' },
+			showcase: { label: 'Showcase', sub: 'stage 3' },
+			negotiate: { label: 'Negotiate', sub: 'stage 4' },
+			trial: { label: 'Trial', sub: 'stage 5' },
+			adopted: { label: 'Adopted', sub: 'stage 6' },
+			paused: { label: 'Deferred or declined', sub: 'can be resumed' },
+			retired: { label: 'Retired', sub: 'record kept' },
+		}
+		const details = {
+			call: [
+				'Stage 0: Call for capabilities',
+				'A platform records a need with <code>openCall</code> before any candidate exists: what it needs, which platform is asking and, optionally, where the call is posted. Several candidates may answer one call. The weekly report marks open calls nobody has answered.',
+			],
+			candidate: [
+				'Stage 1: Candidate',
+				'<code>track</code> starts following an extension from any collective, with or without a call. Evidence: <code>discoveryNotes</code> (source team, how it was found, who follows up) and <code>flowEvidence</code> (a demonstrated improvement to flow or reduced effort).',
+			],
+			value: [
+				'Stage 2: Value proposition',
+				'<code>valueStatement</code>: the wider value, who benefits, the incentives to share, the cost of stewardship and how benefit will be assessed.',
+			],
+			showcase: [
+				'Stage 3: Showcase',
+				'A <code>showcase</code> record and <code>interest</code> from prospective consumers or platforms, with their feedback. No steward needs to be agreed yet.',
+			],
+			negotiate: [
+				'Stage 4: Negotiate stewardship',
+				'A named <code>platform</code> and <code>steward</code>, <code>negotiationNotes</code>, <code>inspectionNotes</code> saying what the platform inspected and found, and <code>collaborationAgreement</code> with the terms of a trial. Then the platform and the original team each record their own consent with <code>agree</code>.',
+			],
+			trial: [
+				'Stage 5: Collaboration and possible adoption',
+				'<code>collaborationNotes</code> with trial feedback and the originating team\'s needs. Adoption also needs <code>adoptionAgreement</code>, <code>agree to=adoption</code> from both parties, <code>credit</code> attributing the value to the original grouping, and <code>offeringRef</code> linking a usable offering.',
+			],
+			adopted: [
+				'Stage 6: Re-commoned',
+				'<code>decide outcome=adopted</code> records the adoption. The agreements and credit can no longer be rewritten. <code>reuseNotes</code> records whether consumers choose to use it, including no uptake. The cycle continues as a new call opened with <code>openCall follows=</code>; this record never resets.',
+			],
+			paused: [
+				'Deferred or declined',
+				'<code>decide</code> with a reason, at any stage before adoption. These are legitimate outcomes, not missing evidence, and the current owner keeps care. <code>decide outcome=active</code> resumes with the earlier evidence and history intact.',
+			],
+			retired: [
+				'Retired',
+				'<code>decide outcome=retired</code> with a reason, when the platform stops offering an adopted capability. The record keeps its agreement, attribution and history, and takes no further decision. Nothing changes in the registry.',
+			],
+		}
+		const order = [...main, 'paused', 'retired']
+		const state = { selected: 'trial' }
+		const svg = document.getElementById('flow')
+		const NH = 44
+		const SW = 144
+
+		function layout(w) {
+			const pos = {}
+			if (w >= 600) {
+				const nw = Math.min(88, Math.floor((w - 6 * 14) / 7))
+				const step = (w - nw) / 6
+				main.forEach((id, i) => (pos[id] = { x: i * step, y: 44, w: nw }))
+				pos.retired = { x: pos.adopted.x, y: 140, w: nw }
+				pos.paused = { x: pos.showcase.x + nw - SW, y: 140, w: SW }
+				return { pos, wide: true, height: 140 + NH + 4 }
+			}
+			main.forEach((id, i) => (pos[id] = { x: 24, y: 28 + i * 60, w: 88 }))
+			const sx = Math.min(w - SW, 202)
+			pos.paused = { x: sx, y: pos.trial.y, w: SW }
+			pos.retired = { x: sx, y: pos.adopted.y, w: SW }
+			return { pos, wide: false, height: 28 + 6 * 60 + NH + 4 }
+		}
+
+		function edges(pos, wide) {
+			const cx = (p) => p.x + p.w / 2
+			const cy = (p) => p.y + NH / 2
+			const out = []
+			for (let i = 0; i < main.length - 1; i++) {
+				const a = pos[main[i]]
+				const b = pos[main[i + 1]]
+				out.push({
+					path: true,
+					d: wide ? `M${a.x + a.w},${cy(a)}H${b.x - 2}` : `M${cx(a)},${a.y + NH}V${b.y - 2}`,
+				})
+			}
+			const A = pos.adopted
+			const C = pos.call
+			const T = pos.trial
+			const P = pos.paused
+			const R = pos.retired
+			if (wide) {
+				out.push({
+					path: true,
+					d: `M${cx(A)},${A.y}V22H${cx(C)}V${C.y - 2}`,
+					label: 'a new call that the adopted capability made possible',
+					lx: (cx(A) + cx(C)) / 2,
+					ly: 14,
+					anchor: 'middle',
+				})
+				out.push({
+					d: `M${cx(T)},${T.y + NH}V${cy(P)}H${P.x + P.w + 2}`,
+					label: 'decide, at any stage before adoption',
+					lx: cx(T) - 6,
+					ly: T.y + NH + 28,
+					anchor: 'end',
+				})
+				out.push({
+					d: `M${cx(A)},${A.y + NH}V${R.y - 2}`,
+					label: 'retire',
+					lx: cx(A) - 6,
+					ly: A.y + NH + 28,
+					anchor: 'end',
+				})
+			} else {
+				out.push({
+					path: true,
+					d: `M${A.x},${cy(A)}H8V10H${cx(C)}V${C.y - 2}`,
+					label: 'a new call after an adoption',
+					lx: cx(C) + 8,
+					ly: 14,
+					anchor: 'start',
+				})
+				out.push({
+					d: `M${T.x + T.w},${cy(T)}H${P.x - 2}`,
+					label: 'stages 1–5',
+					lx: (T.x + T.w + P.x) / 2,
+					ly: cy(T) - 6,
+					anchor: 'middle',
+				})
+				out.push({
+					d: `M${A.x + A.w},${cy(A)}H${R.x - 2}`,
+					label: 'retire',
+					lx: (A.x + A.w + R.x) / 2,
+					ly: cy(A) - 6,
+					anchor: 'middle',
+				})
+			}
+			return out
+		}
+
+		function draw() {
+			const w = svg.getBoundingClientRect().width
+			if (!w) return
+			const { pos, wide, height } = layout(w)
+			svg.setAttribute('height', height)
+			svg.setAttribute('viewBox', `0 0 ${w} ${height}`)
+			let s = `<defs>${['path', 'other']
+				.map(
+					(k) =>
+						`<marker id="arrow-${k}" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0L6,3L0,6z" fill="${k === 'path' ? 'var(--chart-1)' : 'var(--muted-foreground)'}"/></marker>`,
+				)
+				.join('')}</defs>`
+			const labels = []
+			for (const e of edges(pos, wide)) {
+				s += e.path
+					? `<path d="${e.d}" fill="none" stroke="var(--chart-1)" stroke-width="1.5" marker-end="url(#arrow-path)"/>`
+					: `<path d="${e.d}" fill="none" stroke="var(--muted-foreground)" stroke-dasharray="3 3" marker-end="url(#arrow-other)"/>`
+				if (e.label)
+					labels.push(
+						`<text class="edge halo" x="${e.lx}" y="${e.ly}" text-anchor="${e.anchor}">${e.label}</text>`,
+					)
+			}
+			for (const id of order) {
+				const n = nodes[id]
+				const p = pos[id]
+				const selected = state.selected === id
+				s += `<g class="node" data-id="${id}" tabindex="0" role="button" aria-pressed="${selected}" aria-label="${n.label}, ${n.sub}">
+					<rect x="${p.x + 0.5}" y="${p.y + 0.5}" width="${p.w - 1}" height="${NH - 1}" rx="6" fill="var(--background)" stroke="${selected ? 'var(--chart-1)' : 'var(--border)'}" stroke-width="${selected ? 2 : 1}"/>
+					<text x="${p.x + 10}" y="${p.y + 18}">${n.label}</text>
+					<text class="sub" x="${p.x + 10}" y="${p.y + 34}">${n.sub}</text>
+				</g>`
+			}
+			svg.innerHTML = s + labels.join('')
+			const [heading, body] = details[state.selected]
+			document.getElementById('detail').innerHTML =
+				`<p style="margin-bottom: 2px">${heading}</p><p class="ui-muted">${body}</p>`
+		}
+
+		const select = (id) => {
+			state.selected = id
+			draw()
+			svg.querySelector(`[data-id="${id}"]`)?.focus()
+		}
+		svg.addEventListener('click', (e) => {
+			const g = e.target.closest('g.node')
+			if (g) select(g.dataset.id)
+		})
+		svg.addEventListener('keydown', (e) => {
+			const g = e.target.closest('g.node')
+			if (!g) return
+			const i = order.indexOf(g.dataset.id)
+			if (e.key === 'Enter' || e.key === ' ') select(g.dataset.id)
+			else if (e.key === 'ArrowRight' || e.key === 'ArrowDown')
+				select(order[(i + 1) % order.length])
+			else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp')
+				select(order[(i - 1 + order.length) % order.length])
+			else return
+			e.preventDefault()
+		})
+		new ResizeObserver(draw).observe(svg)
+		draw()
+	}
+</script>
