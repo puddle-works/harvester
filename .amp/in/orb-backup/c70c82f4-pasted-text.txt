@@ -1,0 +1,680 @@
+Chapter 1: Introduction and Talk Overview
+0:000 secondsAnd if you're a little bit sleepy, then here's the summary of the talk.
+0:066 secondsYou can watch these pink slides and then have a little snooze on that and then wake up at the end and if you like it, or if you think you like it, then clap.
+0:1313 secondsThat's fine, I'm happy with that, I don't care. So it's this.
+0:1717 secondsSo we need to rethink platform fundamentals, it's in the flow and innovation.
+0:2222 secondsBecause often the way the platforms have been, I don't like the word platform, I'll be honest, I think I say that in a slide later, where the platform is seen is just like a blob of technology and it seems like cost.
+0:3030 secondsBut actually rethink it in terms of flow value, so shorten time to value and so on, and also then innovation.
+0:3838 secondsUse gardening as a mental model. Who actually does gardening? Who knows about that?
+0:4444 secondsPlanting things and watch them grow and all that stuff.
+0:4646 secondsI know people sometimes like no one, it's like just tumbleweed.
+0:5050 secondsSo use gardening as a mental model, like foraging, harvesting and recombining, we'll explore that in a bit.
+0:5555 secondsThink about the social dynamics for the platform as an innovation engine.
+0:5959 secondsDon't just think of the technology parts and the structure and that, but think about how people are actually going to contribute, and then we'll look at some real world examples of platforms as innovation engines.
+1:121 minute, 12 secondsDid anyone expect to get a different talk?
+1:151 minute, 15 secondsThis is the talk I'm going to give, I'm happy to negotiate, but this is the one I prefer.
+1:201 minute, 20 secondsOkay, so let's think about platforms providing rapid harvested curated innovation.
+1:301 minute, 30 secondsSo here's a typical story, the organization questions the value of internal platforms as somehow expensive or like a cost center.
+1:381 minute, 38 secondsWho's seen that? That happens all the time, right? All the time.
+1:441 minute, 44 secondsWhat we see as well is many, well, a fair number of organizations come to us with this particular problem, which is they've got
+1:531 minute, 53 secondsmultiple parallel uncoordinated innovation activities that are financially inefficient.
+1:581 minute, 58 secondsWe'll dive into that in a bit, but this is also pretty common.
+2:092 minutes, 9 secondsThe less typical story is this, the organization must report on effective asset, digital asset usage by industry sector for fiscal compliance.
+2:182 minutes, 18 secondsHas anyone seen this? Has anyone had to deal with this thing?
+2:212 minutes, 21 secondsJust raise your hand, I mean, let me see, one, like one, two, three. Okay, interesting.
+2:262 minutes, 26 secondsSo maybe we can get some real world examples from you on that, that would be interesting to see.
+2:332 minutes, 33 secondsUltimately, we're trying to elevate the role of, well, platform engineering, but also kind of internal platforms, particularly when they're run as a product.
+2:432 minutes, 43 secondsAll right, so let's look at how rethinking platform fundamentals in terms of flow and innovation.
+2:482 minutes, 48 secondsI should say at this point, given that this is like a product team meetup, I'm not a product person particularly, I don't have a fraud background, although I think looking at
+2:582 minutes, 58 secondsthe principles in the book that I co -authored, Team Topology, there's definitely product thinking in there.
+Chapter 2: Platform Fundamentals and Common Misconceptions
+3:043 minutes, 4 secondsAnd actually, this is slightly off topic, but when I started, who knows Melissa Perry?
+3:093 minutes, 9 secondsPut your hand up if you know about Melissa Perry. Quite influential in product.
+3:153 minutes, 15 secondsShe wrote a book called Mind the Build Trap, and more recently, a book called Product Operations.
+3:223 minutes, 22 secondsAnd so we were chatting at a conference, well, two conferences recently.
+3:253 minutes, 25 secondsWe were in a taxi on the way back to the hotel, and we were talking about parallels.
+3:303 minutes, 30 secondsAnd so I went on her podcast back in the last year, and then I read her book.
+3:353 minutes, 35 secondsWell, it was really a book for the podcast.
+3:363 minutes, 36 secondsAnd I was like, oh my goodness, the ideas in her book are basically the same ideas, or many of the same ideas that I've got in my book, coming at it
+3:443 minutes, 44 secondsfrom two different perspectives, me from technology, principally, and she from product. But the intent is very, very similar.
+3:533 minutes, 53 secondsSo we will actually do some work together around the overlap between the two books.
+4:014 minutes, 1 secondI don't know when, because I don't have a huge amount of time, but it might be later this year, it might be next year.
+4:064 minutes, 6 secondsBut there's some stuff coming in this space, like me and Melissa working together on the combined ideas.
+4:144 minutes, 14 secondsSo yeah, I think platform is like a really bad word.
+4:174 minutes, 17 secondsWe put it in the Team Topology book, which was published six years ago now, because most people think of a platform, at least
+4:264 minutes, 26 secondsin digital product stuff, as like a blob of technology. It's not such a good term.
+4:324 minutes, 32 secondsIt does make sense in terms of a term where you're thinking about it's a stable foundation to build other things on. You don't need to know what's underneath.
+4:414 minutes, 41 secondsSo we're doing some work.
+4:424 minutes, 42 secondsWe had a workshop together with my colleagues Noah and Daniel.
+4:494 minutes, 49 secondsThis afternoon with a company here, and I shared a perspective about this.
+4:554 minutes, 55 secondsImagine you're walking in the countryside of the mountain or something across like marshy or boggy ground.
+5:035 minutes, 3 secondsSometimes, certainly in the UK, we get like a boardwalk, like a wooden boardwalk across that area. It means it's easier to walk across.
+5:125 minutes, 12 secondsSo in that sense, a platform means you don't need to care what's underneath.
+5:155 minutes, 15 secondsIt's abstract, which means that you can actually more quickly walk across that thing.
+5:205 minutes, 20 secondsSo in that sense, that sense of platform makes a lot of sense. We're able to move more quickly.
+5:255 minutes, 25 secondsWe don't need to worry about the stuff, the dirty details underneath.
+5:285 minutes, 28 secondsSo it's all right, but I don't think it's the best word. It's the word we've got. It's the word we've got at the moment.
+5:355 minutes, 35 secondsI'm sure another word will come at some point soon.
+5:385 minutes, 38 secondsBut we shouldn't be thinking about building big blocks of technology. That doesn't help.
+5:445 minutes, 44 secondsTechnology is almost certainly going to be involved, fine, but that shouldn't be the aim. Technology is there to help achieve something.
+5:525 minutes, 52 secondsI think we shouldn't be aiming to build shared services.
+5:555 minutes, 55 secondsWe shouldn't be aiming, the aim shouldn't be to provide services that are shared across multiple different parts of the organisation.
+Chapter 3: Historical Context: From DevOps Topologies to Team Topologies
+6:016 minutes, 1 secondThat might be a side effect, but that shouldn't be the aim.
+6:046 minutes, 4 secondsIt has in the past been the aim, but I don't think it should be the aim now. The aim should not be centralisation either.
+6:106 minutes, 10 secondsThere's ways to use internal platforms where you might have, I don't know, five different product lines or P&Ls or something.
+6:186 minutes, 18 secondsYou might have multiple different platforms in each of those lines.
+6:236 minutes, 23 secondsWe shouldn't be aiming just to have a single platform that somehow magically meets the needs of all of us.
+6:296 minutes, 29 secondsYou might end up with something that's centralised if we've done it well, but that shouldn't be the aim.
+6:366 minutes, 36 secondsIt's a bit of a nuance maybe, but I think it's quite important. Traditionally, certainly for IT, a platform was like,
+6:436 minutes, 43 secondsoh, we protect the production of a live environment.
+6:476 minutes, 47 secondsWe're the guardians of the truth, or we're the guardians of the business, and those cowboy developers won't get anywhere near it.
+6:546 minutes, 54 secondsI've been a cowboy developer, I can say that. I've also been an operations side.
+6:586 minutes, 58 secondsBut I don't think we should see it like that either. I don't think we should aim to reduce costs by sharing the services.
+7:087 minutes, 8 secondsI don't think the aim should be to reduce costs.
+7:107 minutes, 10 secondsI mean, that's the driver a lot of the time from CFO or from budget pressure, but I don't think that feels like it shouldn't be the aim.
+7:177 minutes, 17 secondsIt might be a side effect, happy side effect, but I don't think it should be the main aim.
+7:237 minutes, 23 secondsLet's step into our DeLorean, take a trip back in time. You know what this is, right? Please go back to 2013.
+7:367 minutes, 36 secondsI was in a travel retail organization in the UK.
+7:467 minutes, 46 secondsThat organization at the time, and still now, retails about half of all the rail tickets
+7:537 minutes, 53 secondssold online in the UK, which is quite a lot.
+7:577 minutes, 57 secondsThere's like 70 million of us, and we do a lot of rail travel, and so on, so there's quite a lot.
+8:018 minutes, 1 secondI think at the time, back in 2013, that was transacting £2 billion a year, so
+8:098 minutes, 9 secondsthat's, what, $4 billion a year, so it's paramount.
+8:158 minutes, 15 secondsIt's actually flowing through an old VB6 component, but that's a separate thing.
+8:218 minutes, 21 secondsAll right, so I was there, and there was lots of stuff happening.
+8:248 minutes, 24 secondsThis is pre-cloud, although we're preparing to move into Amazon AWS, but at the time, we still had data centers in different parts
+8:328 minutes, 32 secondsof the UK, so it's like a point of transition.
+8:358 minutes, 35 secondsWe're helping the organization to adopt new ways of working, but there was lots of disagreements
+8:448 minutes, 44 secondsor differences of perspective, let's say, between different parts of the organization, almost like fighting about
+8:528 minutes, 52 secondswho should do what, what the responsibility should be, and as part of this, I ended up writing a rage blog post.
+8:588 minutes, 58 secondsI got in a rage, and I wrote a blog post, and I was like, how can we make it better?
+9:049 minutes, 4 secondsIt ended up being quite useful, so Netflix used it to help Netflix understand how to arrange their teams and technology, but they were
+9:139 minutes, 13 secondsalready pretty advanced, so to realize that they were finding it useful was quite handy.
+9:209 minutes, 20 secondsWell, I think it's quite humbling, I suppose, and Condé Nast, the big information publisher, used it, and a bunch of other places.
+9:269 minutes, 26 secondsOne of the large consultancies stole the ideas and didn't attribute it properly.
+9:319 minutes, 31 secondsI won't name a chain, but it was one of the big five consultancies in the world, and so on.
+9:379 minutes, 37 secondsSo anyway, it became quite popular, and we ended up publishing it in a website which is still there called DevOps Topologies, if you search for that, you might find it.
+9:459 minutes, 45 secondsA series of Venn diagrams effectively say, well, what are some ways in which development teams, software development teams, and what were they called, operations teams, how are some effective ways in which they can work together?
+9:579 minutes, 57 secondsOne of those patterns, which we ended up calling Type 3, Ops as Infrastructure as a Service or Platform, so that's like an early
+10:0610 minutes, 6 secondsuse of that word platform, in the IT space at least, and we're characterizing like this,
+10:1210 minutes, 12 secondsso we've got the yellow circle is developments, people developing software, and then there's operations in
+10:2310 minutes, 23 secondsblue, and there's an implied kind of boundary here, because in this particular case, operations is providing something like as a service.
+10:3410 minutes, 34 secondsWe're going to enable the developers to run their applications on an infrastructure, if you like, but we can empower them to do it.
+10:4210 minutes, 42 secondsThis is pretty obvious these days, but back then, it was not at all common to see the value in doing it like that.
+10:5310 minutes, 53 secondsAnyway, so that's that, and then there's an interesting phrase here, it probably helps to treat operations as a team who simply provides the
+11:0111 minutes, 1 secondelastic infrastructure on which applications are deployed and run, like that's into providing something rather than
+11:0811 minutes, 8 secondsgatekeeping or running things for people, so some of this stuff might seem super obvious, but like 2013, not obvious at all.
+11:1911 minutes, 19 secondsFast forward a little bit to 2015, who's used Pivotal Cloud Foundry at all? Has anyone used that?
+11:2611 minutes, 26 secondsThis is quite a technical underpinning thing, right, so this was what's the right word, it
+11:3611 minutes, 36 secondswas ahead of its time, so back in 2015, this was doing stuff which only now some organizations are starting to adopt.
+11:4411 minutes, 44 secondsIt was back then, it was talked about, it was praised itself as a leading enterprise platform as a service powered by Cloud Foundry, and there's a really interesting phrase in the
+11:5211 minutes, 52 secondsmiddle of this, this is a document from then, which has disappeared from the internet, but I found a copy thanks to archive, with an operational model that provides a clean separation
+Chapter 4: Team Topologies Framework: Four Team Types Explained
+12:0112 minutes, 1 secondof developer and operator functions, but experience for development teams, like the idea of providing an
+12:0912 minutes, 9 secondsexperience as a key part of the platform feels really fundamental, that's why this was well ahead of its time, whereas now, everyone's talking
+12:1812 minutes, 18 secondsabout developer experience, but this is literally in light sport, that's like 12 years later, so they were 12 years ahead of the curve,
+12:2612 minutes, 26 secondsand we were influenced by this, I remember when I first read this, I was like, why on earth would you want to have
+12:3312 minutes, 33 secondsa clean separation of developer and operator experience, surely they should be just working together, but actually, there's a lot of value in thinking about who should do what, and what should
+12:4212 minutes, 42 secondsbe aligned to a particular mission, and so on, and so on, and then forward, fast forward to 2019, seems probably this book was
+12:5112 minutes, 51 secondspublished, we've now sold over 200,000 copies worldwide across five languages, I think there's another
+13:0013 minuteslanguage coming soon, the second edition of this book actually publishes in September this year, so six years, almost exactly six years to the
+13:0813 minutes, 8 secondsdate, when the first one was published, and what we've done is, we've corrected one or two little things that were actually incorrect, but
+13:1713 minutes, 17 secondsonly one or two little things, and then we've got some case studies, including a case study from training, anyone work for training here, hands, anyone has worked for, oh, ah, cool,
+13:2613 minutes, 26 secondsso we'll chat afterwards, right, make sure we chat afterwards, thank you very much, it's nice to include, we've got cases from every continent
+13:3413 minutes, 34 secondsin the world, apart from Antarctica, because the penguins are too busy dealing with Trump's tariffs,
+13:4013 minutes, 40 secondssorry, the
+13:5113 minutes, 51 secondssubtitle has actually shifted, so originally, it was all about organising business and technology teams for fast flow, but what we've realised, based on
+13:5913 minutes, 59 secondssome of the case studies from organisations like Tradebee and other places, is that actually, it's more than just about organising teams, it's about
+14:0614 minutes, 6 secondsorganising capability, organising product effectively, like where we think about product boundaries and a bunch of
+14:1314 minutes, 13 secondsother things, so actually, the new subtitle is organising business and technology for fast flow and value, a slightly slight tweak, but effectively, it's
+14:2214 minutes, 22 secondsbroadened, what we've realised is that the patterns are actually way broader than just thinking about organising teams, and that's why I feel able
+14:3114 minutes, 31 secondsto speak at a product thing, the way that people are using it is definitely way broader than just organising teams.
+14:3914 minutes, 39 secondsThere's an interesting concept or phrase that we came up with in the book called thinnest viable platform, it sounds very much like minimum
+14:4714 minutes, 47 secondsviable product and that's deliberate, we wanted it to resonate or to kind of rhyme with that phrase, but this is about making sure
+14:5614 minutes, 56 secondswe don't have, we don't just get technologies to go out there and build a massive great blob of technology, we want to keep it as thin as possible, so it's a
+15:0615 minutes, 6 secondssmaller set of APIs, documentation, tools needed to accelerate teams to developing modern software systems.
+15:1315 minutes, 13 secondsI mean, to be honest, these days, we wouldn't even talk about developing modern software services,
+15:2015 minutes, 20 secondsit's a smaller set of stuff which accelerates teams using that thing, so it could even be like a wiki page, or it could
+15:2815 minutes, 28 secondsbe something where the context is legal services or accidents and emergency in hospitals, something like
+15:3715 minutes, 37 secondsthat, and we're seeing people using patterns well outside of technology, like completely outside of an IT and technology context, but anyway, that's what
+15:4615 minutes, 46 secondsit says in the book, and it's an important concept, like what's the smallest amount of stuff that we can put in place that
+15:5415 minutes, 54 secondsis going to accelerate delivery value in teams that use this thing that we're building that we might call a platform, thinnest viable platform.
+16:0116 minutes, 1 secondWe're not trying to build something massive, we're trying to keep it just the smallest amount possible, but it's actually quite a different concept from MVP.
+16:1016 minutes, 10 secondsI mean, there's lots of debate about that, I'm not going to get into a debate about MVP now, I'm not going to take that bait, but anyway, MVP is more like
+16:1916 minutes, 19 secondsa particular stage in time, let's say, and then something changes afterwards.
+16:2216 minutes, 22 secondsIf you've got thinnest viable platform, you put that in, potentially, if the context doesn't change, that thinnest viable platform might remain there forever.
+16:3116 minutes, 31 secondsIf the context doesn't change, it might get bigger, it might get smaller, but it's a slightly different thing to MVP, but anyway, similar kind of concept.
+16:4016 minutes, 40 secondsThen fast forward a little bit more to 2024, we've got the state of DevOps report, the state of platform engineering report, and they
+16:4816 minutes, 48 secondstalk about platform engineering in particular, and also mention how team apologies provide some heuristics or
+16:5716 minutes, 57 secondsclues for thinking through how to do, how to work with internal platforms, particularly treating them as a product, or at least using product
+17:0517 minutes, 5 secondsthinking and product principles to help shape the value, rather than it just being a load of techies building stuff from a Jira ticket
+17:1417 minutes, 14 secondsqueue, we're actually shaping it using like a product roadmap, but guess what, we're actually going to talk to some users, IT people going
+17:2217 minutes, 22 secondsto talk to some users, oh, who would have thought, right, and thinking about like experience, and net promoter score, or whatever else, and
+17:3017 minutes, 30 secondswhatever comes after NPS, like ways to sense whether we're actually, what we're building is actually useful, now it's actually what people need.
+17:3917 minutes, 39 secondsI mean, these ideas have been fairly well established for what, 20 years since SaaS came along as a product discipline, that we're using that stuff internally.
+17:5117 minutes, 51 secondsSo a platform should accelerate the flow of value by reducing cognitive load for other teams.
+17:5517 minutes, 55 secondsThis is the framing of internal platforms, which I think it's fair to say teams probably
+Chapter 5: Platform as Curated Experience for Engineers
+18:0018 minutesis either introduced or strongly emphasized, and it
+18:0718 minutes, 7 secondsreally helps to give a more useful framing for this stuff.
+18:1218 minutes, 12 secondsIt's not about broad technology, it's not about sharing services, it's about value acceleration, partly by reducing cognitive load, and therefore, whatever the technology
+18:2018 minutes, 20 secondslooks like, whether it looks like a shift from data center to cloud, or where it looks like a shift from, you know, humans
+18:2718 minutes, 27 secondstyping codes to agentic AI, it doesn't really matter what the technology context is, it always relates to, it always relates to the context that humans are working in.
+18:4318 minutes, 43 secondsSo it's, and that's an important point, it's actually got a very important human context, a human thread to what we're doing, like it connects through to the human experience spectrum.
+18:5618 minutes, 56 secondsAnd this is a phrase which unfortunately we did not put in the team's body's book, which I wish we had, but anyway, we came up with it later.
+19:0419 minutes, 4 secondsA platform is a curated experience for engineers who are the customers of the platform.
+19:0819 minutes, 8 secondsWe're using that word customers, or maybe value consumer, but just framing it like that completely changes really how our starting point for thinking
+19:1519 minutes, 15 secondsabout kind of internal platforms in an organization, like we're definitely, it's definitely like a product, it's a product-ish, even if it's not a product, it definitely is, it has a flavor of product.
+19:2519 minutes, 25 secondsWe're talking about Coke. Say it again. It sounds like DevEx, right? It sounds like developer experience, exactly.
+19:3119 minutes, 31 secondsI mean, I don't actually like the phrase developer experience, there's more customers of a platform than developers, but anyway, yes, it's very similar.
+19:3919 minutes, 39 secondsBut curating experience, like that's our starting point, and as part of that experience curation, we might put some technology in there.
+19:4519 minutes, 45 secondsWe're almost certainly going to put some technology in there, but the point is that we're starting with experience, just like product.
+19:5619 minutes, 56 secondsThis is like an enhancement to this.
+19:5819 minutes, 58 secondsThis is what I really want to focus in on tonight, the way in which an internal platform can act as an innovation engine, including financial efficiency and revenue, so we can
+20:0720 minutes, 7 secondsgo beyond the sense of just a curated experience, which is still quite a passive thing, if you like, to actually do something which drives innovation and potentially revenue.
+20:1820 minutes, 18 secondsWe're kind of stepping up a little bit in terms of our game around how we run internal platforms.
+20:2520 minutes, 25 secondsLet's look at a quick overview of Teams' quality.
+20:2920 minutes, 29 secondsWe're starting with the concept of a stream -aligned team. A team aligns to the stream of value.
+20:3320 minutes, 33 secondsIt means we need to know what our value streams are.
+20:3520 minutes, 35 secondsWe need to know who our value consumers are.
+20:3820 minutes, 38 secondsIf you've got a very strong product approach in your organization, you've probably done that already. I would hope you've done that already.
+20:4420 minutes, 44 secondsOtherwise, there's lots of building work and potentially no people using the value, but anyway.
+20:5020 minutes, 50 secondsOne of the biggest surprises I've had in the last six years since the book was published is just how many organizations don't know who their value consumers are or don't really
+20:5820 minutes, 58 secondsknow their needs, and haven't really thought about that, and therefore don't know what the value streams are.
+Chapter 6: Stream-Aligned Teams and Value Flow Principles
+21:0221 minutes, 2 secondsWe kind of assume that most organizations will be basically in that space and therefore could adopt the TT stuff fairly quickly. It turns out that it's not at all.
+21:1021 minutes, 10 secondsWe've done a lot of work on some techniques and things to help organizations find the value streams, identify their value consumer, and blah, blah, blah.
+21:1921 minutes, 19 secondsIn a typical organization, the streams of value are quite long-lived, and therefore the team should be long-lived because we're aligning the team to the stream of value.
+21:2821 minutes, 28 secondsWe're not just spinning up a team to do three weeks' worth of work and then shutting it down.
+21:3121 minutes, 31 secondsWe're saying, well, let's align the team to the ongoing stream of value. We're caring for and involving the service. There's no handoffs to other teams.
+21:3921 minutes, 39 secondsWe're deliberately not handing off. This is a cross-functional team. Sometimes it's like a product team. Gartner called it a fusion team.
+21:4621 minutes, 46 secondsThe closest equivalent that Gartner talked about is a fusion team.
+21:5021 minutes, 50 secondsMartin Kagan talks about empowered product teams, and so on.
+21:5421 minutes, 54 secondsKind of similar idea, but we deliberately didn't use the word product. I'll tell you why.
+21:5921 minutes, 59 secondsWe did some work for Dyson, the hand dryer and the vacuum cleaner people, on site in the UK when they were still having UK presence, or significant UK presence.
+22:1122 minutes, 11 secondsProduct to them meant the physical thing, like the vacuum cleaner or the hand dryer.
+22:1622 minutes, 16 secondsThey had a load of software around it, so in terms of managing it, in terms of controlling from your phone and things, but they didn't see that part of the product.
+22:2322 minutes, 23 secondsThen we realized that there's probably loads of areas where the word product means so many different things, and using the word product would actually confuse. I don't make any apologies for that.
+22:3222 minutes, 32 secondsYou won't see the word product in the context, but if that's what you call it inside your organization, because you see it as
+22:4022 minutes, 40 secondsa digital product, then see it as that, but it's deliberately called streamline team because it's slightly more generic. We're aligning to a stream of brand.
+22:5122 minutes, 51 secondsThere's loads of organizations now that are going, oh, I've heard that everything should be a product.
+22:5622 minutes, 56 secondsWho's heard that inside an organization and gone, no, it's going to be a disaster, because not everything's a product, right?
+23:0123 minutes, 1 secondLots of things benefit from product thinking, but no, not everything's a product.
+23:0523 minutes, 5 secondsThese are small teams, so that's our starting point, because if we've got a small team, we've got high trust. We can make decisions very quickly.
+23:1523 minutes, 15 secondsThere's no handoffs to other teams. We can get changes out the door.
+23:2023 minutes, 20 secondsWe can get telemetry from the live environment back into our team. We can adjust. We can fix problems. We can hands on and so on.
+23:2623 minutes, 26 secondsHow essential is this kind of handoffs to other teams? That's something I really struggle with.
+23:3223 minutes, 32 secondsHow essential is this idea of no handoffs to other teams?
+23:3823 minutes, 38 secondsIf we're happy to go a little bit slowly, then having some handoffs is fine, but if we want to go really quickly, as
+23:4623 minutes, 46 secondsin fast flow, then we want to avoid handoffs as much as possible, because any handoffs then are going to introduce delays.
+23:5223 minutes, 52 secondsAny handoffs are going to introduce a drop in context between one team and another.
+24:0124 minutes, 1 secondGenerally, in some sectors, a handoff is literally life and death.
+24:0624 minutes, 6 secondsIn an A&E context or in a medical context, the more handoffs there are between one team and another, the more likely you are to die from a particular situation.
+24:1724 minutes, 17 secondsWe're deliberately thinking about situations where we're trying to steward and care for that thing.
+24:2424 minutes, 24 secondsIt might be a digital service, or it might actually be something that has a bit more importance or a bit more impact or something.
+24:3924 minutes, 39 secondsIt's not always possible, but what we're saying is, what would it take to get to the point where there is no handoff?
+24:4524 minutes, 45 secondsIt might take some time to get there, but we try and work backwards from the point where let's imagine we've got this streamlined
+24:5424 minutes, 54 secondsteam, and they've got a mix of skills, and there is no handoff.
+24:5724 minutes, 57 secondsThey can own the whole thing end to end. What must be true if that's the situation? We try and work backwards from that.
+25:0825 minutes, 8 secondsExample. Traditionally, you might have a development, testing, release, operation.
+25:1625 minutes, 16 secondsWe're trying to avoid that kind of handoff. There are other kind of handoffs too. Maybe design is a handoff.
+25:2125 minutes, 21 secondsIt starts with design and then comes into development or something.
+25:2425 minutes, 24 secondsWhat would it take to not need to have handoffs?
+25:2825 minutes, 28 secondsUse that as our kind of mental model for trying to work out where capability sits.
+25:3825 minutes, 38 secondsThe diagrams go left to right.
+25:4025 minutes, 40 secondsThere's like a flow of either changes or value going left to right. Anyone speak Arabic or Hebrew? Okay, one. Right, sorry.
+25:4925 minutes, 49 secondsWe have to pick a direction, right? Okay. So we've got the streamlined team on top,
+25:5725 minutes, 57 secondsand then there's three other types of things whose purpose is to improve flow and reduce
+Chapter 7: Enabling Teams and Complicated Subsystems Deep Dive
+26:0426 minutes, 4 secondscognitive load in those streamlined teams, and that's the only purpose for having these other types of team.
+26:1226 minutes, 12 secondsIn the book, we've got an enabling team in purple, so a team of experts.
+26:1726 minutes, 17 secondsIf they don't build anything, they uplift the capabilities in the streamlined team. They help to detect any capability gaps.
+26:2726 minutes, 27 secondsThey can help the team get on board with any way of working, and so on and so on.
+26:3226 minutes, 32 secondsSo they could have a team around security compliance or around design or UX or anything like this, or even how to do product.
+26:4326 minutes, 43 secondsYou could have some product specialists helping a team to understand, well, this is what a product is because most people don't know. It's like value encapsulation.
+26:5026 minutes, 50 secondsThere's a lot of people who don't get that.
+26:5226 minutes, 52 secondsAll they've been doing is working on the next Jira ticket, and the idea of thinking about something as a product might be needed.
+27:0027 minutesSo you can quite easily have an enabling team uplift the skills and awareness around the organization about thinking about things in terms of product.
+27:0827 minutes, 8 secondsPropagating subsystem is an interesting one. This is basically algorithmic complexity.
+27:1427 minutes, 14 secondsIf you've got algorithmic complexity like a video codec or you've got let's say a financial market trading, regulatory reporting, or I don't know, give me some more algorithmic complexity examples.
+27:2727 minutes, 27 secondsThere's something to do with machine learning probably in there.
+27:3127 minutes, 31 secondsIt could be an insurance claim, an aspect of insurance claim where there's a really complicated algorithm, and the point is if we asked a streamlined team to do that thing, to
+27:4027 minutes, 40 secondswork on that calculation, if that then would significantly reduce value flow or significantly increase cognitive
+27:4927 minutes, 49 secondsload, then it might make sense to pull the algorithmic complexity out somewhere else.
+27:5627 minutes, 56 secondsNot necessarily, but it might. Question?
+27:5927 minutes, 59 secondsMy question is coming from the complicated sub teams.
+28:0328 minutes, 3 secondsWould you specify if I see it as an enabling team with an SME in the disciplines of that subject, or is that incorrect
+28:1228 minutes, 12 secondsas enabling teams, or you've got SMEs where because of the shape of it you've got four SMEs that make it like that.
+28:2028 minutes, 20 secondsLet me try and rephrase that.
+28:2428 minutes, 24 secondsSo an enabling team is a good expert in team performance terminology. Enabling teams are good with experts.
+28:2928 minutes, 29 secondsThey don't build anything, but they're uplifting capabilities and detecting capability gaps.
+28:3328 minutes, 33 secondsFor anyone who's in organization design, an enabling team is a boundary spanner, boundary spanning.
+28:3928 minutes, 39 secondsComplicated subsystem does build something, very much builds something.
+28:4328 minutes, 43 secondsIt deals with that algorithmic complexity and makes something available. It could be like a code library. It could be an API, something like that.
+28:5228 minutes, 52 secondsThey're making something available to be consumed by the streamlined team.
+28:5528 minutes, 55 secondsSo all of the complexity, all of the algorithmic awkwardness is inside this boundary, and the people, they've got a maths PhD, or they
+29:0329 minutes, 3 secondsknow about video processing, or whatever it is that it needs to, and are machine learning something.
+29:0829 minutes, 8 secondsThey're effectively hiding all the complexity and exposing it in a way which is pleasant and exciting to consume by the streamlined team, because
+29:1629 minutes, 16 secondsagain, the purpose of this complicated subsystem is to improve flow and reduce cognitive load in the streamlined team.
+29:2529 minutes, 25 secondsYou know the 3D specs, 3D glasses with the red and the blue lenses? You've seen these things.
+29:3229 minutes, 32 secondsSo look at either the cinema or those, what do you call them, the stereoscopic images.
+29:3629 minutes, 36 secondsSo you can do this for team qualities, and I've got product idea. Okay, this is my crappy product idea.
+29:4329 minutes, 43 secondsWe're actually going to offer a product you can buy off the internet, and there'll be some 3D specs in there so that you can literally put them on, and make this mess for real.
+29:5529 minutes, 55 secondsSo the two different lenses are fast flow value and cognitive load.
+30:0230 minutes, 2 secondsYou put the specs on and you see everything in that sense, from that perspective. Does that answer the question even though?
+30:1230 minutes, 12 secondsYeah, I could be here all day. I feel like when you said eight people,
+30:2130 minutes, 21 secondsyou're on such a small country, that's a whole team of eight people.
+30:2430 minutes, 24 secondsSo then I was like, is it a complicated subsystem of this team, or is my team a complicated subsystem?
+30:3530 minutes, 35 secondsOkay, so you're saying eight people is large for a team? It depends on what organisation you're advising.
+30:4430 minutes, 44 secondsOkay, yeah, fine.
+30:4630 minutes, 46 secondsSo when it says eight people, that's the kind of limit.
+30:4930 minutes, 49 secondsYou could probably get away with a few fewer.
+30:5230 minutes, 52 secondsIf you're on call for 24-7 on call, then many fewer than, if you have
+30:5830 minutes, 58 secondsfewer than about seven or eight, it gets a bit tricky with the roads.
+31:1231 minutes, 12 secondsSo yeah, it's a good question.
+31:1431 minutes, 14 secondsSo a team very much takes a team -centric approach.
+31:1631 minutes, 16 secondsWe're not talking about individuals, we're talking about teams.
+31:1831 minutes, 18 secondsSo if we've got an actual team here, then this is a true team. These people work together. These people start together, finish together.
+31:2531 minutes, 25 secondsThey might even literally do ensemble work together on the same problem, at the same time, not trying to split it up into eight different tasks, though I've got one task at the same time, or maybe two.
+31:3731 minutes, 37 secondsBut yeah, I mean, in a very small organisation, let's say you've got, I don't know, seven people working here on the main product, and there's one particular tiny bit of algorithm which actually does need this high algorithm complexity.
+31:4931 minutes, 49 secondsAnd let's say you've got a PhD in mathematics. You probably have, right? Tell me.
+31:5331 minutes, 53 secondsSo let's say we pretend you've got a PhD in mathematics, you can do that thing.
+31:5731 minutes, 57 secondsAnd by pulling that algorithmic complexity out, you're actually helping the streamline team to have a better value flow.
+32:1132 minutes, 11 secondsWhat else?
+32:1132 minutes, 11 secondsRight, so the platform at the bottom, sorry, you had a question, yes?
+32:1632 minutes, 16 secondsAbout the enabling team, so you said, for example, they might introduce a new way of working, but they are separate to the value
+32:2432 minutes, 24 secondsstream, so how can they get the buy -in that they are not part of the team, but trying to implement the new way of working with the value stream?
+32:3432 minutes, 34 secondsGreat question.
+32:3532 minutes, 35 secondsSo I think I'll address this a little bit later.
+32:3732 minutes, 37 secondsSo the question was, the enabling team is somewhat separate from the values team, so how can we get the buy-in for them to do work and stuff, because often it's
+32:4532 minutes, 45 secondshard to persuade people to pay for it and so on. We'll look at that a little bit later.
+32:5032 minutes, 50 secondsBut let me talk about it after talking about platform. In the book, it talks about platform team.
+32:5632 minutes, 56 secondsIt's not actually a team, a platform is really grouping.
+32:5832 minutes, 58 secondsIt's really like a container for other types of team, because inside a platform, we'd expect to see these types of entities.
+Chapter 8: Team Interaction Modes: Collaboration vs As-a-Service
+33:0633 minutes, 6 secondsAnd you can keep zooming into a platform and seeing the same entities. It's fractal, it's self-similar.
+33:1333 minutes, 13 secondsWhat we often see is that an enabling team is almost like a virtual team often, and it emerges from a platform or from a complicated subsystem.
+33:2333 minutes, 23 secondsAnd the members, the people who are experts, so let's say the experts about, let's say
+33:3033 minutes, 30 secondswe've got a platform for cloud infrastructure, something boring, cloud infrastructure platform, experts in helping the
+33:3933 minutes, 39 secondsstreamlined teams to move from one cloud to another, or to adopt a new cloud service or something, whatever.
+33:4633 minutes, 46 secondsSo we might have an enabling team that emerges out from here.
+33:5233 minutes, 52 secondsThe people put on a different hat, maybe literally put on a different hat, and hey, I'm now an enabling team for the next three days.
+33:5933 minutes, 59 secondsWe'll go and work with the streamlined teams for a little bit, but then we'll understand what's needed, and then come back into the platform and actually do the work to build, to update the services.
+34:0934 minutes, 9 secondsSo that's a quite common pattern, is effectively, it's a style of working more than anything else. We don't necessarily have a permanent enabling team.
+34:1834 minutes, 18 secondsThere is something I'll share in a minute, which is different, but we don't necessarily have a permanent enabling team for every single thing.
+34:2334 minutes, 23 secondsSometimes it's kind of like a style of interaction or style of working, effectively.
+34:3334 minutes, 33 secondsAnthony, could I get a glass of water, Anthony? Is that all right? Thank you.
+34:3934 minutes, 39 secondsNow, in the Team Forties book, there's not just types of team.
+34:4434 minutes, 44 secondsI mean, types of teams in itself is a bit radical, is what I've discovered.
+34:4834 minutes, 48 secondsIt's a bit strange for some people, but we've also got styles of interaction. So this is not about structure now.
+34:5434 minutes, 54 secondsThis is about relationships between teams. It's about a relational aspect. Thank you very much.
+35:0235 minutes, 2 secondsWhich, again, is a little bit radical, and thank you. And some people find it a bit challenging.
+35:0835 minutes, 8 secondsAnyway, we've defined three different ways of working together between different teams. Collaboration and facilitating are temporary.
+35:1935 minutes, 19 secondsSo we only expect to see those two things for a couple of days at a time, or maybe a week, maybe at most two weeks.
+35:2635 minutes, 26 secondsMuch longer than that, those interaction styles end up being like a crutch or a support or a walking frame.
+35:3435 minutes, 34 secondsWe don't really want that. We want the teams to be independent.
+35:3735 minutes, 37 secondsCollaboration, two teams working together for a defined period to achieve something specific.
+35:4235 minutes, 42 secondsTypically, we're trying to find a better API or a better user experience or something like that. We're trying to discover that thing.
+35:5235 minutes, 52 secondsDelivery speed goes down. Competitive load goes up for a little period.
+35:5835 minutes, 58 secondsThe people we're working with seem a bit strange.
+36:0136 minutes, 1 secondInfrastructure people or those UX people are a bit weird, like they're from a different part of the organization. They're speaking different.
+36:0736 minutes, 7 secondsAnyway, we work together with them really closely because it's valuable because we're going to discover, we're going to improve something, find a better way of interacting.
+36:1736 minutes, 17 secondsIdeally, we get to a point where we can consume something as a service. That's why as a service is there.
+36:2436 minutes, 24 secondsIn other words, one team provides something, another team consumes something. It could be a list of stuff. It could be a checklist. It could be an API.
+36:3236 minutes, 32 secondsIt could be a library. It could be a set of templates, whatever.
+36:3636 minutes, 36 secondsThe thing is we're consuming as a service, which means there's very little back and forth.
+36:4136 minutes, 41 secondsThe mental model for as a service, so I discovered, I think it was a couple of years ago, I discovered that some people's
+36:4936 minutes, 49 secondsmental model of as a service is completely 180 degrees away from where we intended.
+36:5536 minutes, 55 secondsThe student versions a butler with a white glove or a concierge.
+37:0037 minutesHe says, I'd like to have a little
+37:0837 minutes, 8 secondschocolate with a cherry on the top and a little bit of gold leaf with my name written in gold on the side. Yes, sir. Thank you, sir. Yes, I'll go and do that.
+37:1637 minutes, 16 secondsThey go away and he goes and gets that chocolate and makes it in the little kitchen and brings it back to you. There we go. He goes, thank you very much.
+37:2437 minutes, 24 secondsThat kind of service is not what we're talking about. Absolutely not. What we're talking about is a vending machine.
+37:3337 minutes, 33 secondsSomeone's worked out what products to put there. We can just vend it ourselves.
+37:3637 minutes, 36 secondsWe don't need to speak to anyone, thank goodness.
+37:3837 minutes, 38 secondsSome of the technologies don't even have to be able to speak to people.
+37:4137 minutes, 41 secondsWe vend it from the machine and we're actually really empowered by that if you think about it.
+37:4837 minutes, 48 secondsWe're empowered because we're not waiting on someone else. We can make a decision.
+37:5237 minutes, 52 secondsIf we see the products that are there in the vending machine, we can get it ourselves.
+37:5637 minutes, 56 secondsIf we don't see the product we want, what are our options?
+38:0038 minutesWell, we're not going to wait around for the vending machine people to come and fill it up. We're unblocked.
+38:0538 minutes, 5 secondsWe use what's there or not and then go on our way.
+38:0938 minutes, 9 secondsNow, we can have a conversation with the people who stock the vending machine saying, I really think we should have, give me a flavor of potato chips that is really funky.
+38:2238 minutes, 22 secondsOh, come on. Something better than this. Dill pickle. Thank you. Perfect.
+38:3038 minutes, 30 secondsWe really should have dill pickle potato chips in the vending machine. You provide some evidence.
+38:3938 minutes, 39 secondsYou say, well, look, I've actually collected, done a survey and there's hundreds of people who really want dill pickle potato chips.
+38:4638 minutes, 46 secondsThey say, okay, well, we'll try it, but we'll use one of the little slots in the vending machine. It turns out that people are buying it.
+38:5238 minutes, 52 secondsThey use the evidence and then eventually you become familiar with the fact that you're always going to be able to get dill pickle chips.
+38:5838 minutes, 58 secondsThe point being, it's about that vending machine self-service. There's no need for a lengthy conversation.
+Chapter 9: The Vending Machine vs Butler Mental Model
+39:0739 minutes, 7 secondsYou just do it. You see it there. You end it.
+39:0939 minutes, 9 secondsYou can have the conversation saying, it'd be great to have this thing, but that thing is not immediately provided like a chocolate.
+39:1639 minutes, 16 secondsYou have an asynchronous conversation and then that thing might get provided. And this is how Amazon has been.
+39:2139 minutes, 21 secondsAnd with a popular analogy, collaboration versus self -service, right?
+39:2639 minutes, 26 secondsAgain, you're collaborating and you're asking certain responses about the specific thing you want and the butler goes away and gets that.
+39:3339 minutes, 33 secondsOr in the case of the e-commerce vending machine, you're asking that person to get some of these things. That's collaboration. Yeah.
+39:4239 minutes, 42 secondsI suppose I would say that yes, with the vending machine thing, the collaboration to work
+39:5239 minutes, 52 secondsout what to persuade them what to offer might be a bit of a form of collaboration exactly.
+39:5839 minutes, 58 secondsBut it's really important that that excellent service is self-service. It's immediate. There's no negotiation at that point.
+40:0340 minutes, 3 secondsYou either see what you like and get it or you don't. And there's something I'll mention a little bit later.
+40:1140 minutes, 11 secondsActually, I've got a book here to recommend which relates to exactly that. It's critical for scaling. The third one is facilitating.
+40:2040 minutes, 20 secondsSo typically it's an enabling team, but it could be a different type of team, which is helping to uplift another team and increase their skills and things.
+40:2740 minutes, 27 secondsSo coaching and looking for capability gaps and things like that.
+40:3640 minutes, 36 secondsSo different ways of working.
+40:3740 minutes, 37 secondsWe're setting expectations about what it's going to feel like. So this is about emotions.
+40:4340 minutes, 43 secondsAnd those of us from technology, we're not so familiar with emotions, so we have to encode it in a way which is a little bit more technical like this. Okay. That's fine.
+40:5040 minutes, 50 secondsSo we actually help to set expectations about what it's going to feel like to work with other people.
+40:5640 minutes, 56 secondsSo like, yeah, if it has to come to this, that's fine. Let's just use this approach. And it seems to really help. There's a really nice quotation. In fact, can I put it in here?
+41:0541 minutes, 5 secondsOh, I'm sharing a tab, aren't I? It's not going to work.
+41:0841 minutes, 8 secondsThere's a really nice quotation from one of the case studies on the website, Tina Pawley's website, from a company called Foot Asylum.
+41:1641 minutes, 16 secondsThey do sports footwear and other sports clothes. It's like a retailer.
+41:2341 minutes, 23 secondsAnd they talk about the fact that these team interaction modes here help the product people to work out how to line up different kinds of interactions in advance based on the roadmap and a bunch of other things.
+41:3341 minutes, 33 secondsSo the product people really loved this approach for that reason.
+41:3641 minutes, 36 secondsIt helped give them the language to think through when they would need to talk to different parts of the organization. Any more questions about these?
+41:4441 minutes, 44 secondsDoes that make sense? We've got one over here. What's the main issue there for?
+41:4941 minutes, 49 secondsAre you confident to talk about the employment experience?
+41:5341 minutes, 53 secondsIf I'm not mistaken, that's what that is, within the way they could try and improve the way they efficiently, effectively perform the task
+42:0242 minutes, 2 secondsquicker and faster to the tools they had for the process they used to go from building the barriers up to the end result, if I'm not mistaken. What's the question?
+42:1142 minutes, 11 secondsSorry. No, that's employment experience. Employment experience. I don't know what that is.
+42:2942 minutes, 29 secondsYeah. So the vending machine is predictable, right?
+42:3542 minutes, 35 secondsIt's predictable, it's repeatable, whereas the butler is ad hoc and bespoke every time.
+42:4242 minutes, 42 secondsSo we want something that's more predictable because the predictable thing is what empowers teams to be able to innovate properly and to be independent. Good question.
+42:5042 minutes, 50 secondsSo we've got a flow of value in these diagrams left to right.
+42:5442 minutes, 54 secondsVery popular concept to cache is one way of looking at it, or it could be a set of needs delivering to a user,
+43:0143 minutes, 1 secondor it could be version control for live service, whatever. That's the flow, right? Depending on how you want to visualize it. So let's talk about how this works.
+43:1143 minutes, 11 secondsAnd we've got a couple of Streamlines teams. They're separate. They're working on slightly different things. The value flows all the way along.
+43:1943 minutes, 19 secondsThey're not handing off to anyone else. They're building and running that particular digital service. One of the teams' work becomes more successful.
+43:2643 minutes, 26 secondsSo the size of their stuff gets a bit bigger. So they're a little bit more overloaded now. So what can we do?
+43:3543 minutes, 35 secondsWe can bring in an enabling team to facilitate them a little bit, help them understand the domain, or help them to understand the technology a bit.
+43:4143 minutes, 41 secondsAnd they're like, okay, that feels a little bit better.
+43:4443 minutes, 44 secondsBut it's still quite a lot of stuff to do.
+43:4543 minutes, 45 secondsThey're almost like victims of their own success at this point.
+43:4843 minutes, 48 secondsSo actually, we're going to pull out some of that algorithmic complexity into a complicated subsystem team, maybe, if that's part of the problem.
+43:5543 minutes, 55 secondsThis is not the exact pattern to repeat, but this is just an example. Don't just take this cookie cutter. And we're providing algorithmic complexity as a service.
+Chapter 10: Dynamic Team Structures and Platform Evolution
+44:0444 minutes, 4 secondsSo it's like a vending machine.
+44:0544 minutes, 5 secondsThe service is easy to use, easy to consume. And they're happy again now. Great. That was what the problem was.
+44:1244 minutes, 12 secondsIt was algorithmic complexity which was causing that problem in this particular case here.
+44:1644 minutes, 16 secondsAnd eventually, that complicated subsystem might get pulled into a bigger product or bigger product-ish thing here that's being managed.
+44:2744 minutes, 27 secondsThere's actually more than one service now.
+44:2944 minutes, 29 secondsThere's several services which are being provided from inside this platform grouping.
+44:3344 minutes, 33 secondsAnd maybe at this particular point, the platform is collaborating with one of the streamlined teams around, for example, user experience, trying to improve
+44:4144 minutes, 41 secondsthe user experience of using some of these services.
+44:4344 minutes, 43 secondsSo this is just a snapshot of this particular week that collaboration is happening.
+44:4844 minutes, 48 secondsNext week, the collaboration might finish because they've improved how the service works. Make sense?
+44:5344 minutes, 53 secondsSo that's the kind of narrative we can use with these kind of diagrams, the team shapes and the team interactions.
+45:0045 minutesIt's important that it's not just a structure.
+45:0345 minutes, 3 secondsIt's the dynamic and it's the week-by -week or day-by-day interactions which this helps us to reason about. Yeah.
+45:1345 minutes, 13 secondsI've never visualized a complicated subsystem inside the platform itself.
+45:1745 minutes, 17 secondsIs that a recent change or is that intentional that complicated subsystems inside the platform? Great question. I've not planned these questions, by the way.
+45:2545 minutes, 25 secondsWe did meet beforehand, but we didn't have time to plan the questions. I have a radio book. I know.
+45:3245 minutes, 32 secondsSo that's actually one of the things that is in the original book, but we didn't emphasize enough the fact that the platform is fractal.
+45:3945 minutes, 39 secondsYou can zoom in and you can see different things inside it.
+45:4245 minutes, 42 secondsSo eventually, you expect to see multiple different teams inside the area, depending on how big it is.
+45:5145 minutes, 51 secondsAnd in fact, you can, let's say, you can treat this platform, this might be the entirety of AWS or Azure or Google Cloud or something like this.
+45:5945 minutes, 59 secondsYou can represent the whole thing like that.
+46:0146 minutes, 1 secondAnd so inside there, if you zoomed in, you'd see different teams doing different things, providing services, right? Or it might be your internal platform. Is it also local, like the streamlined teams?
+46:0946 minutes, 9 secondsWhat do you expect?
+46:1046 minutes, 10 secondsWell, if there's value that that platform is providing, as long as that platform provides value, then you'd see it represented there.
+46:2146 minutes, 21 secondsIf there's value, if there's streamlined teams to accelerate and if there's cognitive load to reduce, then you'd see a platform in place.
+46:3246 minutes, 32 secondsSo there we go. Multiple streamlined teams inside the platform, right? That's what we expect to see. Okay.
+46:3946 minutes, 39 secondsSo it provides a language and a way of talking about things.
+46:4146 minutes, 41 secondsIt actually really helps us to reason about things from a product perspective, from a flow perspective, from a team perspective, cognitive load, a bunch of technology and so on and so on.
+46:5046 minutes, 50 secondsSo you're suggesting that these platform teams always emerge out of streamlined teams that are really close to a customer problem?
+47:0447 minutes, 4 secondsIt's a good question. So we don't call them platform teams anymore. We might call them platform groups.
+47:1047 minutes, 10 secondsWe might say a team inside a platform.
+47:1647 minutes, 16 secondsI think it's a slight tweak of the terminology, but it's quite important. It's useful to think of it like that.
+47:2547 minutes, 25 secondsSo it's only if we need to pull out some cognitive load, would we put a platform in place? Was there someone close to your company's customer?
+47:3747 minutes, 37 secondsYeah, absolutely. It's a good point.
+47:4147 minutes, 41 secondsPart of the purpose of having streamlined teams is to get close to the customer. The customer is here.
+47:4647 minutes, 46 secondsWe're as close as we can get to the customer using the streamlined teams.
+47:5047 minutes, 50 secondsYeah, we would ultimately have a value for the customer, right?
+47:5347 minutes, 53 secondsSo those streamlined teams, they are a must -have.
+47:5647 minutes, 56 secondsAnd then everything else like platform grouping is an extra. You always have to create value.
+48:0448 minutes, 4 secondsThe flow of value should always happen, otherwise your company doesn't exist.
+48:0848 minutes, 8 secondsBut it does presuppose that we know who our value consumers are, and we know what their needs are. And that's a massive assumption, right?
+48:1748 minutes, 17 secondsBut let's assume that we've done that work.
+48:1948 minutes, 19 secondsAnd so we know where to align the teams to it. Okay.
+48:2748 minutes, 27 secondsSo a platform should accelerate the flow of value by reducing cognitive load for other teams. We've already seen this, right?
+48:3248 minutes, 32 secondsThat little sequence of diagrams, it just explores how we would talk about it, how we would actually map it out.
+48:3948 minutes, 39 secondsThese diagrams are created using fully open shapes. You'll find it on the website.
+48:4648 minutes, 46 secondsSo there's all kind of templates for different kind of tools and things.
+48:5148 minutes, 51 secondsAnd the diagramming style has got some like a playbook and things with it as well.
+48:5648 minutes, 56 secondsSo a platform to create curated experience for the engineers, thinking about our customers. So these diagrams are always snapshots in time.
+Chapter 11: Innovation Duplication Problem and Solutions
+49:0449 minutes, 4 secondsThey're never like a fixed, this is how our organization works.
+49:0849 minutes, 8 secondsThey should always be seen as like just a snapshot for this day or this week. And you can buy them online.
+49:1649 minutes, 16 secondsWe partnered with a company called Agile Station. All right, let's look at this in detail. Typical story.
+49:2349 minutes, 23 secondsThe organization has got multiple parallel uncoordinated innovation initiatives that are financially inefficient.
+49:3049 minutes, 30 secondsOnce you get to a certain size of organization, this happens a lot. This happens a lot.
+49:3749 minutes, 37 secondsSo let's say we've got a kind of flow based organization like this. We've got multiple different streams of value.
+49:4449 minutes, 44 secondsWe've got a platformy thing in blue with some streams of value. There's some unconscious duplication happening. People aren't deliberately being wasteful.
+49:5249 minutes, 52 secondsThey're just going, oh, well, we need to innovate on this thing or that thing.
+49:5649 minutes, 56 secondsIt might be, I don't know, it's chuck GPT or it's something.
+50:0050 minutesAnd the innovation is happening in multiple different points.
+50:0250 minutes, 2 secondsAnd if you've got an organization of 50 different teams or 100 teams or 250 teams, like one organization we're working with at the moment, this stuff is absolutely going to happen.
+50:1550 minutes, 15 secondsSo like rapid innovation, great.
+50:1750 minutes, 17 secondsIsolated innovation, where people aren't learning and sharing, not so great.
+50:2350 minutes, 23 secondsDuplicated innovation, where we're not, that's a bit, I don't really want that because we're paying for stuff which is not valuable.
+50:3150 minutes, 31 secondsAnd then rapid, rapid, isolated, duplicated innovation, the finance CFO is going to say, what are you doing? There's absolutely no value in that at all.
+50:4150 minutes, 41 secondsWhat we need is rapid, harvested, curated innovation. That's what we're trying to get to. And then everyone's happy.
+50:4850 minutes, 48 secondsWell, most people, some people are still grumpy always, but right.
+50:5150 minutes, 51 secondsBut we're trying to get to the point where a lot of people are happy. So how do we get there?
+50:5750 minutes, 57 secondsWe can use gardening as a mental model and there's some foraging, harvesting, and re-commoning. So we're going to plant some seeds.
+51:0451 minutes, 4 secondsWe're allowing different seeds to grow in different parts of the organisation.
+51:0951 minutes, 9 secondsThen we're going to harvest, we're going to find the fruits, if you like, the ones that look best, harvest them. Don't pick the mushrooms, you don't know.
+51:2051 minutes, 20 secondsSo foraging, finding the things that are out there, right. Harvesting and collecting the things together.
+51:2751 minutes, 27 secondsAnd then a word that, a phrase that I came across from someone called Jay Bloom, but I think other people have used it too, which is re-commoning.
+51:3751 minutes, 37 secondsSo making those things available to many, many people. And it's an innovation cycle.
+51:4951 minutes, 49 secondsSo we can pick any part of the cycle to start with, but let's say we start with foraging.
+51:5451 minutes, 54 secondsSo we start with foraging, we find some stuff that's useful, some innovations are working well. We harvest them.
+Chapter 12: Gardening Mental Model: Foraging, Harvesting, Re-commoning
+52:0152 minutes, 1 secondIn other words, we say, okay, well, we'd like to offer them for an internal platform.
+52:0852 minutes, 8 secondsAnd we kind of re-common them, we make them available for other teams to use.
+52:1852 minutes, 18 secondsAnd there's a situation here where precisely because we've foraged interesting things and we've harvested them and made them available by re-commoning, the act of doing that fertilises new products, right.
+52:3152 minutes, 31 secondsBecause there's now available new APIs, new data, new tooling, new this, new that, that actually
+52:4052 minutes, 40 secondsfertilises, that helps other teams to build new stuff, which they wouldn't be able to do before.
+52:4552 minutes, 45 secondsWe've got more in the vending machine model, we've got more vending machines and more variety of stuff in the vending machine.
+52:5252 minutes, 52 secondsSo people can like package that stuff together, put it in a bag and sell that thing as a ready meal or sell it as a nice unit.
+52:5952 minutes, 59 secondsSo this whole thing gets to a point where we're able to innovate way better. There's decentralised innovation actually in what it's doing.
+53:1653 minutes, 16 secondsSo we've looked at a fairly simple teams apologies map like this.
+53:2253 minutes, 22 secondsLet's look at one which is a bit more involved.
+53:2353 minutes, 23 secondsDon't worry about the detail, the point is this is actually based on some real work that we did with a customer in the US earlier this year.
+53:3153 minutes, 31 secondsSo it might look like this, there's all kinds of stuff happening. We've got some groupings of teams.
+53:3853 minutes, 38 secondsSo we've got these platform groupings here and we've got some stream-aligned team groupings.
+53:4253 minutes, 42 secondsWe've got a tiny little platform up here on the top right.
+53:4553 minutes, 45 secondsThis is a platform that's specific just to these couple of teams here, which is fine.
+53:4953 minutes, 49 secondsIt doesn't need to be centralised, it can be out there very close to the customer in just in that P&L or just in that value stream there, which is to your point.
+53:5953 minutes, 59 secondsAnd there's like a cycle of outreach. So the platform puts out a call.
+54:0454 minutes, 4 secondsThis diagram's awful, you can't see anything, I apologise for that.
+54:0854 minutes, 8 secondsBut the platform puts out a call and says, hey, has anyone got anything in this area?
+54:1254 minutes, 12 secondsAnd it turns out this team up here has been doing something around that and says, oh, well, we've been doing a bit of work around that.
+54:1954 minutes, 19 secondsWe can tidy it up a little bit, we can package it.
+54:2254 minutes, 22 secondsThere's a bit of negotiation and the platform inspects it, we shake hands over it.
+54:2854 minutes, 28 secondsOkay, well, we'll take on that innovation, we'll bring it into the platform, package it up and make it available for other teams to use.
+54:3554 minutes, 35 secondsObviously, the team that did that innovation in the first place would want to use it probably.
+54:4054 minutes, 40 secondsSo there's a bit of collaboration, understand their needs.
+54:4954 minutes, 49 secondsBut it means that the platform, internal platform, does not need to do all innovation, we're expecting to pull it in from other places.
+54:5754 minutes, 57 secondsBecause it's happening already, so in a larger organisation, so we take the opportunity to look for it and make it available.
+55:1455 minutes, 14 secondsI see this as an ideal. Fantastic.
+55:3455 minutes, 34 secondsSo let me delay
+55:4455 minutes, 44 secondsanswering that question until a few slides later, because I can talk about my experience in the UK government growing exactly this with about 18 different external suppliers back in 2018.
+55:5455 minutes, 54 secondsIt's a great question. I can talk about that in a bit.
+Chapter 13: Platform Choice and Adoption Discipline
+56:0356 minutes, 3 secondsSo crucially, platforms can choose whether or not to harvest or adopt a service from outside the platform.
+56:0856 minutes, 8 secondsA streamlined team is never going to force a platform to adopt their thing.
+56:1256 minutes, 12 secondsHey, we've grown these mushrooms or we've grown this weird squash or give me something else that they've grown, something that's really weird, I don't know.
+56:2256 minutes, 22 secondsThey've got a cactus.
+56:2356 minutes, 23 secondsThe platform might say, I don't want a cactus, I'm not going to offer a cactus from my vending machine platform, it's completely inappropriate.
+56:2956 minutes, 29 secondsThe streamlined team has to care for that cactus for as long as it needs to.
+56:3656 minutes, 36 secondsBut crucially, teams and services outside the platform can also choose whether or not to use a platform. It's optional.
+56:4256 minutes, 42 secondsLike a vending machine, no one's going to force me to buy something from there.
+56:4556 minutes, 45 secondsI can choose to do it, but I can choose not to do it as well. And that level of discipline is really important.
+56:5256 minutes, 52 secondsWe need to absolutely minimize the amount of time when people are forced to use something else.
+56:5756 minutes, 57 secondsSometimes if it's about, for example, security like a single sign-on, we might practically have to do that.
+57:0457 minutes, 4 secondsBut we need to absolutely make sure the experience of using that service is absolutely first class. Otherwise, we're going to be slowing teams down.
+57:1157 minutes, 11 secondsOtherwise, it's going to be disappointing and demoralizing.
+57:1857 minutes, 18 secondsIf the platform is something that the teams really wanted in the first place, and that analysis was done, then the platform becomes a
+57:2657 minutes, 26 secondsproduct that these guys can do, or it has enough marketing for people to actually- Exactly.
+57:3157 minutes, 31 secondsLike if a product is good, then people adopt it, right?
+57:3357 minutes, 33 secondsI mean, that's literally part of the point of taking a product- Don't grab them always. Yeah, don't grab them always. Exactly.
+57:3857 minutes, 38 secondsLike if a product is good, I mean, okay, there's some ways in which products get into the marketplace and get traction by other means.
+57:4457 minutes, 44 secondsBut generally speaking, in a proper market, then the good products will get the traction. So that's part of the discipline.
+57:5057 minutes, 50 secondsWe do the marketing, we articulate the value, we understand the user needs, we understand the user experience, all of that stuff.
+57:5657 minutes, 56 secondsAnd if we've done that well, then probably we're targeting the right set of needs and things, and people kind of adopt it.
+58:0358 minutes, 3 secondsSo it's a good balance of discipline in there.
+58:0658 minutes, 6 secondsSo it's really carefully balanced between the platform is choosing whether to harvest services and the services can choose whether to use the platform.
+58:1358 minutes, 13 secondsAnd that's a good, healthy balance and discipline that keeps things healthy from an ecosystem perspective.
+58:2558 minutes, 25 secondsWe need to think about the social dynamics for the platform as this innovation engine as well, like hiring for adaptability first and technology second.
+58:3458 minutes, 34 secondsSo if you think about it, any digital technology we introduced now is likely to be obsolete in five years or three years or even 18 months.
+58:4358 minutes, 43 secondsSo we need to expect it to disappear in a short space of time. These timeframes are crazy, right?
+58:4758 minutes, 47 secondsBecause generally accepted accounting practice will do like a straight line amortization of like capital assets over, say, three years.
+58:5558 minutes, 55 secondsSo the technology is out of date before the accountants have finished doing that stuff.
+Chapter 14: Social Dynamics and Technology Adaptability
+59:0059 minutesThis is the first time in history really that that's been a thing.
+59:0459 minutes, 4 secondsSo we're butting up against like 250 years of accounting practices that were designed to count cattle, cows in the field, and that now they just don't work with digital services.
+59:1559 minutes, 15 secondsSo we have to deal with this stuff.
+59:1659 minutes, 16 secondsSo the danger is if we put in, we need to make sure we're hiring for people who are happy to switch their focus away from this particular technology to something else.
+59:2859 minutes, 28 secondsOtherwise, if they just want to focus on the technology that they're hired for, we're stuck with that thing for a long time, for far longer than we should have.
+59:4059 minutes, 40 secondsSo we need to avoid this kind of skills gravity.
+59:4259 minutes, 42 secondsLots of smart hiring, some cross-training, maybe some incentives. It can be very small. You can make a $20 Amazon voucher.
+59:4959 minutes, 49 secondsOr maybe this country is going to be $40, $20 isn't very much, is it?
+59:5259 minutes, 52 secondsLike $40 Amazon voucher, something like this, just to nudge people in the right direction, in a more effective direction, away from this gravity well of old technologies.
+1:00:041 hour, 4 secondsAll right. Fine. So we've got clear boundaries for flow.
+1:00:101 hour, 10 secondsWe've got limited interactions or carefully defined interactions between different teams and different parts of the organization deliberately.
+1:00:171 hour, 17 secondsHow are we actually going to create alignment across the organization?
+1:00:211 hour, 21 secondsHow do we actually learn from each other at speed? We're sort of not talking to each other.
+1:00:291 hour, 29 secondsWe're deliberately, we just want things at the vending machine. We're not talking to the person.
+1:00:321 hour, 32 secondsThere's no one selling anything at the vending machine. There's no one to talk to.
+1:00:361 hour, 36 secondsAnd from some respects, that's good because it allows us to go more quickly, more independent.
+1:00:411 hour, 41 secondsBut how are we actually going to learn about practices and things like this?
+1:00:441 hour, 44 secondsAnd how do we find the services to harvest and re-common? What does that look like? So here's our diagram again.
+1:00:521 hour, 52 secondsWe've got multiple independent flows and it's all fractal.
+1:00:551 hour, 55 secondsWe need something that we call active knowledge diffusion across the organization. Actively diffusing knowledge and awareness across the organization.
+1:01:051 hour, 1 minute, 5 secondsSo my mental model is this.
+1:01:081 hour, 1 minute, 8 secondsIt's like an incense stick, but then with an electric fan behind it.
+1:01:141 hour, 1 minute, 14 secondsSo it's pushing that smell across the room, like night smell across the room like this. So you can all smell it.
+1:01:201 hour, 1 minute, 20 secondsWe don't have to eat it right then and there. So again, unless it's a mushroom smell.
+1:01:261 hour, 1 minute, 26 secondsSo we're actively diffusing this knowledge across the team boundaries. Using tech, all kinds of things like these.
+1:01:361 hour, 1 minute, 36 secondsInternal conferences, public blogs, skills, lunches.
+1:01:381 hour, 1 minute, 38 secondsWho uses some of these techniques in your organization? Communities of practice and stuff like this, right? It's quite common.
+1:01:441 hour, 1 minute, 44 secondsI've been doing this for ages and I think this next slide, I've even written a book about it. It's also a book about internal tech conferences.
+1:01:521 hour, 1 minute, 52 secondsIf you're interested, go to internaltechconference.com. The thing is, these techniques here often are
+1:02:001 hour, 2 minutesquite isolated and often the funding dries up or they're run by one or two people and then those people leave or they get distracted and then the stuff disappears and then the organization wonders what went wrong.
+1:02:111 hour, 2 minutes, 11 secondsIt's like a garden.
+1:02:131 hour, 2 minutes, 13 secondsIf you don't water it, if it's not thinking about how things relate, it can end up drying up or dying.
+1:02:231 hour, 2 minutes, 23 secondsNow here's the thing.
+1:02:251 hour, 2 minutes, 25 secondsI ran these internal conferences with a small other group.
+1:02:281 hour, 2 minutes, 28 secondsI was leading it at this train ticket retailer in the UK, like I mentioned.
+1:02:361 hour, 2 minutes, 36 secondsBut there's a particular way that we were running these conferences.
+1:02:391 hour, 2 minutes, 39 secondsAnd after running about five of them, they were every six months for half a day.
+1:02:441 hour, 2 minutes, 44 secondsThe organization at the time was like 450 people, so quite small.
+1:02:491 hour, 2 minutes, 49 secondsBut the way in which we ran them was kind of, looking back, was quite opinionated.
+1:02:541 hour, 2 minutes, 54 secondsAnd the CEO at the time, Murray Hennessey, said this, this initiative around internal conferences has been the single most effective thing to align
+1:03:011 hour, 3 minutes, 1 secondbusiness and technology I have seen in this organization.
+1:03:041 hour, 3 minutes, 4 secondsNow for an organization doing about 150 million pounds, so 300 million dollars at the time,
+1:03:111 hour, 3 minutes, 11 secondsthat was arguably worth like 5 million pounds, 10 million pounds, something like this.
+1:03:171 hour, 3 minutes, 17 secondsLike 5%, 10%, 15% of the total revenue.
+1:03:211 hour, 3 minutes, 21 secondsBecause if there was a misalignment, like a big investment in technology or a big missing initiative, that could cost literally millions of pounds or dollars.
+1:03:301 hour, 3 minutes, 30 secondsSo for him to say that, it must have had a significant effect. Now at the time, that was slightly accidental.
+1:03:371 hour, 3 minutes, 37 secondsI wasn't particularly reflecting on exactly what we were doing, because a bunch of things that we were doing, things like deliberately bringing together the head of sales and the head of
+1:03:441 hour, 3 minutes, 44 secondsdatabase, and encouraging them to find common ground for a talk, they ended up doing a
+1:03:511 hour, 3 minutes, 51 secondstalk on like upgrading the Oracle database from this person to that.
+1:03:541 hour, 3 minutes, 54 secondsIt's the most boring talk in the world, right?
+1:03:561 hour, 3 minutes, 56 secondsOn paper, no one cares about upgrading Oracle databases.
+1:03:591 hour, 3 minutes, 59 secondsBut it was actually one of the best talks, because the way in which they did it was really funny, and they gave anecdotes, and they're clearly working together.
+1:04:061 hour, 4 minutes, 6 secondsThey did a live demo, like head of legal, and head of marketing, and the CEO, and a load of people there clapping and laughing and really enjoying it.
+1:04:151 hour, 4 minutes, 15 secondsMassively powerful, right?
+1:04:171 hour, 4 minutes, 17 secondsYou're literally on the stage, literally, I said pre-COVID, but literally on the stage, someone from database and someone from sales working together.
+1:04:261 hour, 4 minutes, 26 secondsThey've discovered some stuff, they've found some common ground.
+1:04:291 hour, 4 minutes, 29 secondsDuring the course of doing that thing, we're creating some alignment and awareness and engagement.
+1:04:361 hour, 4 minutes, 36 secondsThere's ways of running these kind of internal communities and groups and things, learning events, there's
+1:04:441 hour, 4 minutes, 44 secondsa real way to connect that to real value.
+1:04:481 hour, 4 minutes, 48 secondsWe did it with Telus, which is a Canadian telecoms and healthcare corporation as well, more recently. This active knowledge infusion feels really, really important.
+1:04:591 hour, 4 minutes, 59 secondsWe're building alignment, trust, engagement, and finding services to harvest and recon, because we'll go out
+1:05:061 hour, 5 minutes, 6 secondsthere and find, oh, this team has done something amazing here.
+1:05:111 hour, 5 minutes, 11 secondsWell, let's talk to them, let's bring that in to our core platform that we're running as a product, make that available.
+1:05:211 hour, 5 minutes, 21 secondsThen the value is higher, more teams can use it, more teams are accelerated.
+1:05:251 hour, 5 minutes, 25 secondsThe value of this internal platform is effectively increased because we've increased the reach of what we can do.
+1:05:331 hour, 5 minutes, 33 secondsWe've scaled the ability of more teams to make use of that thing.
+1:05:411 hour, 5 minutes, 41 secondsSome real world examples then of this, Amazon and AWS is the classic example. They've been doing this for absolutely ages.
+1:05:481 hour, 5 minutes, 48 secondsThere's loads of stuff online about how they do it.
+1:05:511 hour, 5 minutes, 51 secondsI'm not going to explain this diagram, I just put it there to make it look clever. It's actually Wardly Map. Who's familiar with Wardly Mapping?
+1:05:591 hour, 5 minutes, 59 secondsSuper cool tool, go and investigate it.
+1:06:021 hour, 6 minutes, 2 secondsIt's basically, I would say, essential for any product person to get to understand what Wardly Mapping is.
+1:06:071 hour, 6 minutes, 7 secondsIt gives you basically, it's like a crystal ball into the future.
+1:06:121 hour, 6 minutes, 12 secondsIt helps you to actually see where to invest, and so it's basically essential.
+1:06:161 hour, 6 minutes, 16 secondsAnyway, Amazon's situation of awareness is extremely high, and the way in which they build products
+1:06:241 hour, 6 minutes, 24 secondsactually helps them to gain metrics and a bunch of other things.
+1:06:291 hour, 6 minutes, 29 secondsThis book here is worth looking at, Unbundling the Enterprise.
+1:06:321 hour, 6 minutes, 32 secondsIt actually talks about how Amazon does it in this book, Unbundling the Enterprise, APIs, Optionality, and the Science of Happy Accidents.
+1:06:401 hour, 6 minutes, 40 secondsIt's about innovation at scale, enterprise scale, and how it's actually done.
+1:06:521 hour, 6 minutes, 52 secondsThe stuff we talked about, about treating internal platforms as optional, defining an API, making it a vending machine, that's what Amazon has been doing for 20 years.
+1:07:031 hour, 7 minutes, 3 secondsThat's part of the reason for their growth. Spotify has done it.
+1:07:091 hour, 7 minutes, 9 secondsThere's some little examples in here for some of their internal tools, providing some pre-built
+1:07:181 hour, 7 minutes, 18 secondsstuff, some slight customization, and then just access to the API for more advanced users like this.
+1:07:241 hour, 7 minutes, 24 secondsA nice little variety of different approaches, like just enough variety that it's easy enough to
+1:07:301 hour, 7 minutes, 30 secondsprovide and manage, but you're providing a variety for teams that are in a different stage of maturity.
+1:07:381 hour, 7 minutes, 38 secondsThe Singapore government has done some amazing stuff. I was out there recently. Who's been at Singapore?
+1:07:491 hour, 7 minutes, 49 secondsI was out there recently talking to people, saying we're going to have a case study in the second edition based on what the Singapore government or the GovTech part of the Singapore government is doing.
+1:07:581 hour, 7 minutes, 58 secondsThey're using the Team Equality's principles to accelerate innovation by putting experts, what they call it, forward deployment, forward deployment of capability out into
+1:08:071 hour, 8 minutes, 7 secondsdifferent government agencies to uplift the capability so that they are ready to consume services from
+1:08:141 hour, 8 minutes, 14 secondsa vending machine style API, because the agencies are not familiar with that way of working.
+1:08:191 hour, 8 minutes, 19 secondsWe have to get them ready to be able to use that kind of innovation. There's 4.5 million citizens.
+1:08:271 hour, 8 minutes, 27 secondsIt's quite impactful. That story is coming out in September, but they've talked about it for quite a while.
+1:08:381 hour, 8 minutes, 38 secondsThey've been doing this for since I think 2018, I think, aspects of this.
+1:08:431 hour, 8 minutes, 43 secondsIf you search for Singapore GovTech forward deployment teams, I think there's three or four articles online.
+1:08:521 hour, 8 minutes, 52 secondsThis forward deployment capability is quite cool.
+1:08:551 hour, 8 minutes, 55 secondsHere's a stock market asset reporting stuff I talked about before.
+1:08:591 hour, 8 minutes, 59 secondsThere's an organisation must report on effective asset usage, digital asset usage by industry sector.
+1:09:041 hour, 9 minutes, 4 secondsSpecifically, if an asset was only used by one, this particular organisation that works in healthcare, education, and financial services, I think.
+1:09:151 hour, 9 minutes, 15 secondsIf one of their assets was only used by one of these verticals, it wasn't seen as good by the stock market.
+1:09:211 hour, 9 minutes, 21 secondsI don't know the details, but I'm not in that space.
+1:09:231 hour, 9 minutes, 23 secondsThe idea was, can we get to reuse the asset across these different industry sectors? That was the drive from a financial perspective.
+1:09:321 hour, 9 minutes, 32 secondsWe've got this innovation cycle going on, harvesting.
+1:09:361 hour, 9 minutes, 36 secondsTherefore, at some point, this is the same we saw before, the same terrible diagram.
+1:09:441 hour, 9 minutes, 44 secondsThis actually then is helping to drive better asset reporting for stock market compliance because now
+1:09:531 hour, 9 minutes, 53 secondsthe assets down in here and is now able to be used across different industry verticals.
+1:10:001 hour, 10 minutesThis diagram comes out of the work that we did there.
+1:10:061 hour, 10 minutes, 6 secondsWe've got a better story for whoever's driving that stock market reporting compliance.
+1:10:111 hour, 10 minutes, 11 secondsI don't know who that is, CFO, I don't know who, COO, I don't know who will drive that, but whoever's driving that, we've actually got a better story at this point because of the way that we're doing our
+1:10:181 hour, 10 minutes, 18 secondsinnovation, the way that we're thinking about managing products, aspects of products.
+1:10:311 hour, 10 minutes, 31 secondsWe just need to admit that this duplication is going to happen and then do the harvesting and making it available again when it actually appears.
+1:10:401 hour, 10 minutes, 40 secondsI'm not telling that story.
+1:10:441 hour, 10 minutes, 44 secondsWhat can help with this platform as an innovation engine?
+1:10:471 hour, 10 minutes, 47 secondsWarding mapping, we've talked about already, really worth having a look at.
+1:10:511 hour, 10 minutes, 51 secondsI can't imagine not using warding mapping to think about things now.
+1:10:571 hour, 10 minutes, 57 secondsDefinitely worth having a look at if you've not seen that already.
+1:11:021 hour, 11 minutes, 2 secondsAnother tool that's less well-known, but it's actually a little bit easier to get to grips with is something called core domain charts. Who's seen these before? Just interested.
+1:11:101 hour, 11 minutes, 10 secondsOne, two, three, four. Okay. Really interesting.
+1:11:131 hour, 11 minutes, 13 secondsSimilar kind of concept to warding mapping, but slightly less scary.
+1:11:161 hour, 11 minutes, 16 secondsAgain, it helps us to think about where we should be investing our time and money based on what's happening in the marketplace and
+1:11:241 hour, 11 minutes, 24 secondswhat's happening with technology and a bunch of other things.
+1:11:281 hour, 11 minutes, 28 secondsIdeally, we're putting most of our effort and activity in the top right corner here because that's where there's high complexity and high differentiation.
+1:11:381 hour, 11 minutes, 38 secondsIf there's high complexity, high differentiation, that's a hard problem to solve.
+1:11:411 hour, 11 minutes, 41 secondsTherefore, if we crack it, then we're going to have the biggest market share and so on and so on.
+1:11:461 hour, 11 minutes, 46 secondsWe've got a bit of a moat around our activity group here, but over time, something that we started doing that was a differentiator
+1:11:531 hour, 11 minutes, 53 secondsmight eventually actually just be something that's no longer differentiating the market because at some point, Amazon or someone is going to build that thing.
+1:12:031 hour, 12 minutes, 3 secondsIf we start to detect that Amazon's moving in that direction, we can't rely on that thing being a differentiator anymore.
+1:12:091 hour, 12 minutes, 9 secondsWe start to get some insight into how we might need to look for different differentiators in the marketplace.
+1:12:161 hour, 12 minutes, 16 secondsThis feels like a really important product adjacent technique.
+1:12:231 hour, 12 minutes, 23 secondsIt's influenced by Teams qualities as well, but in the main design and things like that.
+1:12:291 hour, 12 minutes, 29 secondsTeams qualities, obviously, is helpful, particularly with enabling Teams.
+1:12:351 hour, 12 minutes, 35 secondsAn approach to active knowledge diffusion, the one that we have pulled together, one that we've packaged is called Adapt Together, but anything which
+1:12:431 hour, 12 minutes, 43 secondsis really making that seeking out and sharing and diffusing knowledge across the organization feels like a really important thing to do.
+1:12:531 hour, 12 minutes, 53 secondsWe can't just leave it to chance. There's no water coolers anymore. We're all remote or partly remote.
+1:12:571 hour, 12 minutes, 57 secondsWe have to make it an active thing and a more directed approach to discovering what's out there.
+1:13:051 hour, 13 minutes, 5 secondsHere's our book, Unbundling the Enterprise. It's a really good book. I was skeptical at first. I didn't think I'd review it.
+1:13:101 hour, 13 minutes, 10 secondsI thought, all right, I'm a complete conduit now, which must mean it's a good book.
+1:13:221 hour, 13 minutes, 22 secondsIt's probably a good book to give to someone who doesn't really understand software as well.
+1:13:271 hour, 13 minutes, 27 secondsIf you need to get them to understand why API is in particular useful, then a COO or someone, maybe they don't have a background, this could actually be quite good because
+1:13:341 hour, 13 minutes, 34 secondsit does talk about operational effectiveness and things like that. All right, let's look at the summary.
+1:13:421 hour, 13 minutes, 42 secondsHow can platform engineering or platforms in general drive innovation, efficiency, market advantage, and why should the COO or CFO care?
+1:13:491 hour, 13 minutes, 49 secondsThese things, rethink platform fundamentals in terms of flow and innovation. That's what feels like is a valuable approach.
+1:13:591 hour, 13 minutes, 59 secondsUsing gardening as a mental model, foraging, harvesting, and re-commoning, and that's going to fertilize new products as they're more available.
+1:14:071 hour, 14 minutes, 7 secondsConsider the social dynamics of the platform skills and things like that.
+1:14:111 hour, 14 minutes, 11 secondsThen we've had some real-world examples, particularly AWS, but there's loads more examples in the unbundling book, lots of other examples in here, organizations doing this stuff really well.
+1:14:281 hour, 14 minutes, 28 secondsGreat question, thank you so much.
+
+Sync to video time
